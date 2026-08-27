@@ -1,0 +1,13 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { PrescriptionsHub } from "@/components/PrescriptionsHub";
+import { canReadClinicalData } from "@/lib/authz";
+
+if (!canReadClinicalData(Astro.locals.userRole)) {
+  return Astro.redirect("/patients");
+}
+---
+
+<AppShell title="Prescriptions">
+  <PrescriptionsHub client:load initialRole={Astro.locals.userRole} />
+</AppShell>

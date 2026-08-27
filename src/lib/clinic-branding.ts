@@ -2,8 +2,10 @@
 export const CLINIC_NAME = "Sta.Isabel Dental Clinic";
 export const CLINIC_DOCTOR = "Dra. Rizzallen C. Sta.Isabel";
 /** Printed credential line (e.g. patient history / receipts). */
-export const CLINIC_DOCTOR_CREDENTIAL = "Rizzallen C. Sta.Isabel, DMD";
-export const CLINIC_DOCTOR_LICENSE_NO = "053299";
+export const CLINIC_DOCTOR_CREDENTIAL = "Rizzallen C. Sta. Isabel, DMD";
+export const CLINIC_DOCTOR_LICENSE_NO = "0053299";
+export const CLINIC_SERVICES =
+  "General Dentistry • Orthodontics • Oral Surgery";
 export const CLINIC_ADDRESS =
   "81A. Mabini St., Burgos, Rodriguez, Rizal";
 export const CLINIC_FACEBOOK = "Sta.Isabel Dental Clinic";

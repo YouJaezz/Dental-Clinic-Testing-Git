@@ -11,6 +11,7 @@ export const tl: TranslationDict = {
     administration: "Administrasyon",
     changeHistory: "Kasaysayan ng pagbabago",
     visitBilling: "Bayad sa bisita",
+    prescriptions: "Reseta",
   },
   common: {
     ok: "Sige",
@@ -82,6 +83,7 @@ export const tl: TranslationDict = {
     procedures: "Mga procedura",
     record: "Rekord",
     payment: "Bayad",
+    prescription: "Reseta",
   },
   dev: {
     tab: "Advanced",

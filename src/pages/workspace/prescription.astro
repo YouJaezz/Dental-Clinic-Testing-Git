@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { WorkspacePrescription } from "@/components/WorkspacePrescription";
+---
+
+<AppShell title="Prescription">
+  <WorkspacePrescription client:load initialRole={Astro.locals.userRole} />
+</AppShell>

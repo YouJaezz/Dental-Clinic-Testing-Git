@@ -1,0 +1,148 @@
+---
+import "@/styles/prescription-document.css";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_DOCTOR_CREDENTIAL,
+  CLINIC_DOCTOR_LICENSE_NO,
+  CLINIC_FACEBOOK,
+  CLINIC_LOGO_SRC,
+  CLINIC_PHONE,
+  CLINIC_SERVICES,
+} from "@/lib/clinic-branding";
+
+interface Patient {
+  firstName: string;
+  lastName: string;
+  address: string | null;
+  displayAge: number | null;
+  displayGender: string | null;
+}
+
+interface Line {
+  name: string;
+  doseStrength: string | null;
+  instructions: string | null;
+  quantity: number;
+}
+
+interface Props {
+  patient: Patient;
+  prescriptionNumber: number;
+  prescribedAtLabel: string;
+  notes: string | null;
+  lines: Line[];
+}
+
+const { patient, prescriptionNumber, prescribedAtLabel, notes, lines } =
+  Astro.props;
+
+const patientName = `${patient.firstName} ${patient.lastName}`;
+const padLines = lines.length > 0 ? lines : [{ name: "", doseStrength: null, instructions: null, quantity: 1 }];
+---
+
+<article id="prescription-document" class="prescription-pad">
+  <header class="prescription-pad__header">
+    <div class="prescription-pad__brand">
+      <img
+        src={CLINIC_LOGO_SRC}
+        alt=""
+        class="prescription-pad__logo"
+        width="52"
+        height="52"
+      />
+      <div>
+        <p class="prescription-pad__clinic-name">
+          Sta. Isabel <span>Dental Clinic</span>
+        </p>
+        <p class="prescription-pad__services">{CLINIC_SERVICES}</p>
+        <p class="prescription-pad__contact">{CLINIC_ADDRESS}</p>
+        <p class="prescription-pad__contact">
+          {CLINIC_PHONE} · {CLINIC_FACEBOOK}
+        </p>
+      </div>
+    </div>
+    <div class="prescription-pad__badge-wrap">
+      <span class="prescription-pad__badge">PRESCRIPTION</span>
+      <p class="prescription-pad__rx-no">
+        No. <strong>{prescriptionNumber}</strong>
+      </p>
+    </div>
+  </header>
+
+  <section class="prescription-pad__patient-grid">
+    <div class="prescription-pad__field">
+      <span class="prescription-pad__field-label">Patient Name:</span>
+      <span class="prescription-pad__field-value">{patientName}</span>
+    </div>
+    <div class="prescription-pad__field">
+      <span class="prescription-pad__field-label">Date:</span>
+      <span class="prescription-pad__field-value">{prescribedAtLabel}</span>
+    </div>
+    <div class="prescription-pad__field">
+      <span class="prescription-pad__field-label">Age:</span>
+      <span class="prescription-pad__field-value">
+        {patient.displayAge != null ? patient.displayAge : "—"}
+      </span>
+    </div>
+    <div class="prescription-pad__field">
+      <span class="prescription-pad__field-label">Address:</span>
+      <span class="prescription-pad__field-value">
+        {patient.address?.trim() || "—"}
+      </span>
+    </div>
+    <div class="prescription-pad__field">
+      <span class="prescription-pad__field-label">Gender:</span>
+      <span class="prescription-pad__field-value">
+        {patient.displayGender?.trim() || "—"}
+      </span>
+    </div>
+  </section>
+
+  <div class="prescription-pad__rx-block">
+    <div class="prescription-pad__rx-mark" aria-hidden="true">℞</div>
+    <div class="prescription-pad__rx-list">
+      {
+        padLines.map((line, index) => {
+          const dosePart = line.doseStrength?.trim()
+            ? ` ${line.doseStrength.trim()}`
+            : "";
+          return (
+            <div class="prescription-pad__rx-item">
+              <p class="prescription-pad__rx-med">
+                {index + 1}. {line.name}
+                {dosePart} # {line.quantity ?? 1}
+              </p>
+              {line.instructions?.trim() ? (
+                <p class="prescription-pad__rx-sig">
+                  Sig. {line.instructions.trim()}
+                </p>
+              ) : null}
+            </div>
+          );
+        })
+      }
+    </div>
+  </div>
+
+  <section class="prescription-pad__notes">
+    <p class="prescription-pad__notes-title">Notes / Additional Instructions</p>
+    <p class="prescription-pad__notes-body">{notes?.trim() || " "}</p>
+  </section>
+
+  <section class="prescription-pad__closing">
+    <div class="prescription-pad__sig">
+      <div class="prescription-pad__sig-line" aria-hidden="true"></div>
+      <p class="prescription-pad__sig-name">{CLINIC_DOCTOR_CREDENTIAL}</p>
+      <p class="prescription-pad__sig-meta">
+        Lic No. {CLINIC_DOCTOR_LICENSE_NO}
+      </p>
+    </div>
+  </section>
+
+  <footer class="prescription-pad__footer">
+    <p class="prescription-pad__footer-reminder">
+      <strong>Reminder:</strong> Take your medication as prescribed and complete
+      the full course.
+    </p>
+  </footer>
+</article>

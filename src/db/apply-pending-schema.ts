@@ -4,6 +4,7 @@
  */
 import "./load-env";
 import { mkdirSync, readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { getDatabaseProvider, isPostgres } from "./provider";
@@ -195,8 +196,58 @@ function applySqlite() {
     "CREATE UNIQUE INDEX IF NOT EXISTS visits_ticket_number_idx ON visits (ticket_number);",
   );
 
+  if (!hasTable(db, "medicine_catalog")) {
+    console.log("Applying prescriptions schema…");
+    runSqlFile(db, "drizzle/0016_prescriptions.sql");
+    seedDefaultMedicines(db);
+  } else if (
+    (
+      db
+        .prepare("SELECT COUNT(*) as n FROM medicine_catalog")
+        .get() as { n: number }
+    ).n === 0
+  ) {
+    seedDefaultMedicines(db);
+  }
+
+  if (
+    hasTable(db, "prescription_lines") &&
+    !hasColumn(db, "prescription_lines", "quantity")
+  ) {
+    console.log("Applying prescription line quantity…");
+    db.exec(
+      "ALTER TABLE prescription_lines ADD COLUMN quantity integer NOT NULL DEFAULT 1;",
+    );
+  }
+
   db.close();
   console.log("Schema update complete:", dbPath);
+}
+
+function seedDefaultMedicines(db: Database.Database) {
+  const medicines = [
+    ["AMOX500", "Amoxicillin", "500 mg capsule", "1 capsule every 8 hours for 7 days"],
+    ["MEF500", "Mefenamic Acid (Dolfenal)", "500 mg tablet", "1 tablet every 8 hours as needed for pain"],
+    ["IBU400", "Ibuprofen (Advil)", "400 mg tablet", "1 tablet every 8 hours after meals"],
+    ["PARA500", "Paracetamol (Biogesic)", "500 mg tablet", "1–2 tablets every 6 hours as needed"],
+    ["MET500", "Metronidazole (Flagyl)", "500 mg tablet", "1 tablet every 8 hours for 7 days"],
+    ["CLIND300", "Clindamycin", "300 mg capsule", "1 capsule every 8 hours for 7 days"],
+    ["AZI500", "Azithromycin", "500 mg tablet", "1 tablet once daily for 3 days"],
+    ["CEPH500", "Cephalexin", "500 mg capsule", "1 capsule every 6 hours for 7 days"],
+    ["AUG625", "Co-amoxiclav (Augmentin)", "625 mg tablet", "1 tablet every 12 hours for 7 days"],
+    ["DICLO50", "Diclofenac potassium", "50 mg tablet", "1 tablet every 8 hours as needed"],
+    ["CHX012", "Chlorhexidine mouthwash", "0.12% solution", "Rinse 15 mL twice daily for 7 days"],
+    ["TRAM50", "Tramadol", "50 mg tablet", "1 tablet every 8 hours as needed for severe pain"],
+  ];
+  const insert = db.prepare(`
+    INSERT INTO medicine_catalog (id, code, name, default_dose, default_instructions, active, created_at)
+    VALUES (?, ?, ?, ?, ?, 1, ?)
+  `);
+  const now = Date.now();
+  for (const [code, name, dose, instructions] of medicines) {
+    insert.run(randomUUID(), code, name, dose, instructions, now);
+  }
+  console.log(`Seeded ${medicines.length} default medicines.`);
 }
 
 async function applyPostgres() {

@@ -316,6 +316,72 @@ export const correctionRequests = pgTable(
   }),
 );
 
+export const medicineCatalog = pgTable("medicine_catalog", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  code: text("code"),
+  name: text("name").notNull(),
+  defaultDose: text("default_dose"),
+  defaultInstructions: text("default_instructions"),
+  active: boolean("active").notNull().default(true),
+  createdAt: ts("created_at").$defaultFn(() => new Date()),
+});
+
+export const prescriptions = pgTable(
+  "prescriptions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    patientId: text("patient_id")
+      .notNull()
+      .references(() => patients.id, { onDelete: "cascade" }),
+    visitId: text("visit_id").references(() => visits.id, {
+      onDelete: "set null",
+    }),
+    prescriptionNumber: integer("prescription_number").notNull(),
+    prescribedAt: ts("prescribed_at"),
+    notes: text("notes"),
+    createdByUserId: text("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: ts("created_at").$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    numberIdx: index("prescriptions_number_idx").on(t.prescriptionNumber),
+    patientIdx: index("prescriptions_patient_id_idx").on(t.patientId),
+    visitIdx: index("prescriptions_visit_id_idx").on(t.visitId),
+    prescribedAtIdx: index("prescriptions_prescribed_at_idx").on(t.prescribedAt),
+  }),
+);
+
+export const prescriptionLines = pgTable(
+  "prescription_lines",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    prescriptionId: text("prescription_id")
+      .notNull()
+      .references(() => prescriptions.id, { onDelete: "cascade" }),
+    catalogId: text("catalog_id")
+      .notNull()
+      .references(() => medicineCatalog.id, { onDelete: "restrict" }),
+    nameSnapshot: text("name_snapshot").notNull(),
+    doseStrength: text("dose_strength"),
+    instructions: text("instructions"),
+    quantity: integer("quantity").notNull().default(1),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: ts("created_at").$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    prescriptionIdx: index("prescription_lines_prescription_id_idx").on(
+      t.prescriptionId,
+    ),
+  }),
+);
+
 export const visitPayments = pgTable(
   "visit_payments",
   {
@@ -361,6 +427,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 
 export const patientsRelations = relations(patients, ({ many }) => ({
   visits: many(visits),
+  prescriptions: many(prescriptions),
 }));
 
 export const visitsRelations = relations(visits, ({ one, many }) => ({
@@ -371,6 +438,7 @@ export const visitsRelations = relations(visits, ({ one, many }) => ({
   procedureLines: many(visitProcedureLines),
   payments: many(visitPayments),
   correctionRequests: many(correctionRequests),
+  prescriptions: many(prescriptions),
 }));
 
 export const correctionRequestsRelations = relations(
@@ -424,3 +492,40 @@ export const visitPaymentsRelations = relations(visitPayments, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const medicineCatalogRelations = relations(medicineCatalog, ({ many }) => ({
+  prescriptionLines: many(prescriptionLines),
+}));
+
+export const prescriptionsRelations = relations(
+  prescriptions,
+  ({ one, many }) => ({
+    patient: one(patients, {
+      fields: [prescriptions.patientId],
+      references: [patients.id],
+    }),
+    visit: one(visits, {
+      fields: [prescriptions.visitId],
+      references: [visits.id],
+    }),
+    createdBy: one(users, {
+      fields: [prescriptions.createdByUserId],
+      references: [users.id],
+    }),
+    lines: many(prescriptionLines),
+  }),
+);
+
+export const prescriptionLinesRelations = relations(
+  prescriptionLines,
+  ({ one }) => ({
+    prescription: one(prescriptions, {
+      fields: [prescriptionLines.prescriptionId],
+      references: [prescriptions.id],
+    }),
+    catalog: one(medicineCatalog, {
+      fields: [prescriptionLines.catalogId],
+      references: [medicineCatalog.id],
+    }),
+  }),
+);

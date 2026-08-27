@@ -9,6 +9,7 @@ export const en = {
     administration: "Administration",
     changeHistory: "Change history",
     visitBilling: "Visit billing",
+    prescriptions: "Prescriptions",
   },
   common: {
     ok: "OK",
@@ -80,6 +81,7 @@ export const en = {
     procedures: "Procedures",
     record: "Record",
     payment: "Payment",
+    prescription: "Prescription",
   },
   dev: {
     tab: "Advanced",

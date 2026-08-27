@@ -38,6 +38,9 @@ export function AppShellNav(props: Props) {
       <a href="/workspace" className={linkClass(path, "/workspace")}>
         {t("nav.workspace")}
       </a>
+      <a href="/prescriptions" className={linkClass(path, "/prescriptions")}>
+        {t("nav.prescriptions")}
+      </a>
       <a href="/visits/ongoing" className={linkClass(path, "/visits/ongoing")}>
         {t("nav.ongoingVisits")}
       </a>

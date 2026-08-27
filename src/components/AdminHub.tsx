@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AdminMedicineCatalog } from "@/components/AdminMedicineCatalog";
 import { AdminApprovalRequests } from "@/components/AdminApprovalRequests";
 import { AdminAdvancedTools } from "@/components/AdminDevTools";
 import { AdminPendingBadge } from "@/components/AdminPendingBadge";
@@ -683,6 +684,8 @@ export function AdminHub(props: { initialRole: Role }) {
           </TableBody>
         </Table>
       </section>
+
+      <AdminMedicineCatalog />
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

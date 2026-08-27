@@ -15,6 +15,9 @@ export const patients = active.patients;
 export const visits = active.visits;
 export const procedureCatalog = active.procedureCatalog;
 export const visitProcedureLines = active.visitProcedureLines;
+export const medicineCatalog = active.medicineCatalog;
+export const prescriptions = active.prescriptions;
+export const prescriptionLines = active.prescriptionLines;
 export const visitPayments = active.visitPayments;
 export const correctionRequests = active.correctionRequests;
 
@@ -24,6 +27,9 @@ export const patientsRelations = active.patientsRelations;
 export const visitsRelations = active.visitsRelations;
 export const procedureCatalogRelations = active.procedureCatalogRelations;
 export const visitProcedureLinesRelations = active.visitProcedureLinesRelations;
+export const medicineCatalogRelations = active.medicineCatalogRelations;
+export const prescriptionsRelations = active.prescriptionsRelations;
+export const prescriptionLinesRelations = active.prescriptionLinesRelations;
 export const visitPaymentsRelations = active.visitPaymentsRelations;
 export const correctionRequestsRelations = active.correctionRequestsRelations;
 
