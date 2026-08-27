@@ -1,0 +1,27 @@
+---
+import "@/styles/globals.css";
+import { CLINIC_NAME } from "@/lib/clinic-branding";
+import ClinicLogo from "@/components/ClinicLogo.astro";
+import { PatientIntakeForm } from "@/components/PatientIntakeForm";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFC4D1" />
+    <link rel="icon" type="image/png" href="/clinic-logo.png" />
+    <title>Patient registration · {CLINIC_NAME}</title>
+  </head>
+  <body>
+    <main class="min-h-screen px-4 py-8 sm:py-12">
+      <div class="mx-auto mb-8 flex max-w-lg flex-col items-center gap-3 text-center">
+        <ClinicLogo size="lg" />
+        <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          New patient
+        </p>
+      </div>
+      <PatientIntakeForm client:load />
+    </main>
+  </body>
+</html>

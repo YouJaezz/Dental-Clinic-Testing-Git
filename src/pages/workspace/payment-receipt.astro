@@ -1,0 +1,65 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import VisitPaymentReceiptDocument from "@/components/VisitPaymentReceiptDocument.astro";
+import { VisitPaymentReceiptExport } from "@/components/VisitPaymentReceiptExport";
+import { canReadClinicalData } from "@/lib/authz";
+import { formatManilaDateLong, toManilaDateKey } from "@/lib/manila-date";
+import { loadVisitPaymentReceipt } from "@/lib/visit-payment-receipt";
+import { workspaceQuery } from "@/lib/workspace-url";
+
+const role = Astro.locals.userRole;
+if (!canReadClinicalData(role)) {
+  return Astro.redirect("/patients");
+}
+
+const patientId = Astro.url.searchParams.get("patientId");
+const visitId = Astro.url.searchParams.get("visitId");
+if (!patientId || !visitId) {
+  return Astro.redirect("/workspace");
+}
+
+const data = await loadVisitPaymentReceipt(visitId);
+if (!data || data.patient.id !== patientId) {
+  return Astro.redirect("/workspace");
+}
+
+const generatedAt = new Date().toLocaleString(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const visitYmd = toManilaDateKey(new Date(data.summary.visitDate));
+const visitDateLabel = formatManilaDateLong(visitYmd);
+const backHref = `/workspace/payment${workspaceQuery(patientId, visitId)}`;
+const title = `Statement · ${data.patient.lastName}, ${data.patient.firstName}`;
+---
+
+<AppShell title={title}>
+  <div class="print-hide mb-4 flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      class="rounded-md border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+      onclick="window.print()"
+    >
+      Print
+    </button>
+    <VisitPaymentReceiptExport
+      client:load
+      patientFirstName={data.patient.firstName}
+      patientLastName={data.patient.lastName}
+      visitDateYmd={visitYmd}
+    />
+    <a
+      href={backHref}
+      class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+    >
+      Back to payment
+    </a>
+  </div>
+
+  <VisitPaymentReceiptDocument
+    patient={data.patient}
+    summary={data.summary}
+    generatedAtLabel={generatedAt}
+    visitDateLabel={visitDateLabel}
+  />
+</AppShell>

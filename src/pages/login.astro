@@ -1,0 +1,52 @@
+---
+import "@/styles/globals.css";
+import { CLINIC_ADDRESS, CLINIC_DOCTOR, CLINIC_NAME, CLINIC_PHONE } from "@/lib/clinic-branding";
+import ClinicLogo from "@/components/ClinicLogo.astro";
+import { LoginForm } from "@/components/LoginForm";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFC4D1" />
+    <link rel="icon" type="image/png" href="/clinic-logo.png" />
+    <title>Sign in · {CLINIC_NAME}</title>
+  </head>
+  <body>
+    <main class="flex min-h-screen">
+      <section
+        class="clinic-auth-panel relative hidden w-full max-w-md flex-col lg:flex lg:max-w-lg xl:max-w-xl"
+        aria-hidden="false"
+      >
+        <div class="relative z-10 flex flex-col items-center gap-4">
+          <ClinicLogo size="xl" />
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">
+              {CLINIC_NAME}
+            </h1>
+            <p class="mt-1 text-sm font-medium text-foreground/80">
+              {CLINIC_DOCTOR}
+            </p>
+          </div>
+          <p class="max-w-xs text-sm leading-relaxed text-foreground/75">
+            {CLINIC_ADDRESS}
+            <br />
+            {CLINIC_PHONE}
+          </p>
+        </div>
+      </section>
+      <section
+        class="flex flex-1 flex-col items-center justify-center bg-white px-4 py-10 sm:px-8"
+      >
+        <div class="mb-8 flex flex-col items-center gap-3 lg:hidden">
+          <ClinicLogo size="lg" />
+          <p class="text-center text-sm font-semibold text-foreground">
+            {CLINIC_NAME}
+          </p>
+        </div>
+        <LoginForm client:load />
+      </section>
+    </main>
+  </body>
+</html>

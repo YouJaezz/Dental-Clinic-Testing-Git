@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { OngoingVisitsHub } from "@/components/OngoingVisitsHub";
+---
+
+<AppShell title="Ongoing visits">
+  <OngoingVisitsHub client:load initialRole={Astro.locals.userRole} />
+</AppShell>

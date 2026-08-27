@@ -1,0 +1,24 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { AnalyticsHub } from "@/components/AnalyticsHub";
+
+const isAdmin =
+  Astro.locals.userRole === "ADMIN_I" ||
+  Astro.locals.userRole === "ADMIN_II";
+---
+
+<AppShell title="Analytics">
+  {
+    isAdmin ? (
+      <AnalyticsHub client:load initialRole={Astro.locals.userRole} />
+    ) : (
+      <p class="text-destructive">
+        You do not have access to analytics or clinic revenue reports.{" "}
+        <a href="/patients" class="underline underline-offset-4">
+          Return to patients
+        </a>
+        .
+      </p>
+    )
+  }
+</AppShell>

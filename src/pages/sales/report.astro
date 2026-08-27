@@ -1,0 +1,410 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_DOCTOR,
+  CLINIC_NAME,
+  CLINIC_PHONE,
+} from "@/lib/clinic-branding";
+import { DailySalesReportExport } from "@/components/DailySalesReportExport";
+import {
+  buildDailySalesReport,
+  resolveDailySalesDate,
+} from "@/lib/daily-sales";
+import { canPickDailySalesDate } from "@/lib/authz";
+import { formatCents } from "@/lib/money";
+
+const role = Astro.locals.userRole;
+if (role !== "ADMIN_I" && role !== "ADMIN_II" && role !== "USER") {
+  return Astro.redirect("/patients");
+}
+
+const canPick = canPickDailySalesDate(role);
+const dateParam = Astro.url.searchParams.get("date");
+const resolved = resolveDailySalesDate(dateParam, canPick);
+if ("error" in resolved) {
+  return Astro.redirect("/sales");
+}
+
+const reportResult = await buildDailySalesReport(resolved.date, canPick);
+if ("error" in reportResult) {
+  return Astro.redirect("/sales");
+}
+const report = reportResult;
+
+const generatedAt = new Date().toLocaleString(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const collectedTowardExisting = report.existingBalances.reduce(
+  (s, r) => s + r.collectedOnReportDateCents,
+  0,
+);
+
+function formatTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+const reportQuery = canPick && report.date ? `?date=${report.date}` : "";
+---
+
+<AppShell title="Daily sales report">
+  <style is:global>
+    @media print {
+      body aside {
+        display: none !important;
+      }
+      body .print-hide {
+        display: none !important;
+      }
+      body main > header {
+        display: none !important;
+      }
+      body main {
+        padding: 0.5rem !important;
+      }
+      .sales-report-doc table {
+        font-size: 10pt;
+      }
+      .sales-report-section {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+      }
+    }
+    .sales-report-doc table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .sales-report-doc th,
+    .sales-report-doc td {
+      border: 1px solid #d4d4d8;
+      padding: 0.35rem 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .sales-report-doc th {
+      background: #ffc4d1; /* highlight pink — softer than button blush */
+      font-weight: 600;
+    }
+    .sales-report-doc .num {
+      text-align: right;
+      white-space: nowrap;
+    }
+    .sales-report-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .sales-report-summary dt {
+      font-size: 0.75rem;
+      color: #71717a;
+    }
+    .sales-report-summary dd {
+      margin: 0.15rem 0 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .sales-report-voided {
+      background: #fffbeb;
+    }
+    .sales-report-voided .void-tag {
+      display: inline-block;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #fde68a;
+      border-radius: 0.2rem;
+    }
+    .sales-report-voided .struck {
+      text-decoration: line-through;
+    }
+  </style>
+
+  <div class="print-hide mb-4 flex flex-wrap items-start gap-2">
+    <button
+      type="button"
+      class="rounded-md border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+      onclick="window.print()"
+    >
+      Print
+    </button>
+    <DailySalesReportExport client:load reportDate={report.date} />
+    <a
+      href={`/sales${reportQuery}`}
+      class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+    >
+      Back to daily sales
+    </a>
+  </div>
+
+  {
+    canPick ? (
+      <form
+        class="print-hide clinic-card mb-6 max-w-sm space-y-2 p-4"
+        method="get"
+        action="/sales/report"
+      >
+        <label for="report-date" class="text-sm font-medium">
+          Report date (Manila)
+        </label>
+        <input
+          id="report-date"
+          name="date"
+          type="date"
+          value={report.date}
+          class="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
+        />
+        <button
+          type="submit"
+          class="rounded-md border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+        >
+          Update report
+        </button>
+      </form>
+    ) : null
+  }
+
+  <article id="daily-sales-report-document" class="sales-report-doc max-w-4xl">
+    <header class="border-b border-border pb-4 text-center">
+      <h2 class="text-xl font-bold tracking-tight">{CLINIC_NAME}</h2>
+      <p class="text-sm text-muted-foreground">{CLINIC_DOCTOR}</p>
+      <p class="text-xs text-muted-foreground">
+        {CLINIC_ADDRESS} · {CLINIC_PHONE}
+      </p>
+      <h3 class="mt-4 text-lg font-semibold">Daily sales report</h3>
+      <p class="text-sm font-medium">{report.dateLabel}</p>
+      <p class="text-xs text-muted-foreground">
+        Generated {generatedAt} · {report.timezone}
+      </p>
+    </header>
+
+    <section class="sales-report-section mt-6">
+      <h4 class="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        Summary
+      </h4>
+      <dl class="sales-report-summary">
+        <div>
+          <dt>Total collected</dt>
+          <dd>{formatCents(report.collectedCents)}</dd>
+        </div>
+        <div>
+          <dt>Payments</dt>
+          <dd>{report.paymentCount}</dd>
+        </div>
+        <div>
+          <dt>Existing unpaid</dt>
+          <dd>{formatCents(report.existingBalanceCents)}</dd>
+        </div>
+        <div>
+          <dt>Collected toward prior balances</dt>
+          <dd>{formatCents(collectedTowardExisting)}</dd>
+        </div>
+        <div>
+          <dt>Visit charges (date)</dt>
+          <dd>{formatCents(report.chargesCents)}</dd>
+        </div>
+        <div>
+          <dt>Balance on visits (date)</dt>
+          <dd>{formatCents(report.balanceOnVisitsCents)}</dd>
+        </div>
+        <div>
+          <dt>Lines removed</dt>
+          <dd>{report.voidedLineCount}</dd>
+        </div>
+        <div>
+          <dt>Charges removed</dt>
+          <dd>{formatCents(report.voidedChargesCents)}</dd>
+        </div>
+      </dl>
+      {
+        report.byMethod.length > 0 ? (
+          <p class="mt-2 text-sm">
+            <span class="font-medium">By method:</span>{" "}
+            {report.byMethod
+              .map(
+                (m) =>
+                  `${m.method} ${formatCents(m.amountCents)} (${m.count})`,
+              )
+              .join(" · ")}
+          </p>
+        ) : null
+      }
+    </section>
+
+    <section class="sales-report-section mt-8">
+      <h4 class="mb-2 font-semibold">Existing unpaid balances</h4>
+      {
+        report.existingBalances.length === 0 ? (
+          <p class="text-sm text-muted-foreground">None — all visits fully paid.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Visit date</th>
+                <th>Status</th>
+                <th class="num">Balance</th>
+                <th class="num">Collected today</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.existingBalances.map((v) => (
+                <tr>
+                  <td>{v.patientName}</td>
+                  <td>{v.visitDateLabel}</td>
+                  <td>{v.status === "OPEN" ? "Open" : "Closed"}</td>
+                  <td class="num">{formatCents(v.balanceCents)}</td>
+                  <td class="num">
+                    {v.collectedOnReportDateCents > 0
+                      ? formatCents(v.collectedOnReportDateCents)
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      }
+    </section>
+
+    <section class="sales-report-section mt-8">
+      <h4 class="mb-2 font-semibold">Visits on {report.dateLabel}</h4>
+      {
+        report.visits.length === 0 ? (
+          <p class="text-sm text-muted-foreground">No visits on this date.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th class="num">Charges</th>
+                <th class="num">Paid</th>
+                <th class="num">Balance</th>
+                <th class="num">Collected today</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.visits.map((v) => (
+                <tr>
+                  <td>{v.patientName}</td>
+                  <td class="num">{formatCents(v.chargesCents)}</td>
+                  <td class="num">{formatCents(v.paidCents)}</td>
+                  <td class="num">{formatCents(v.balanceCents)}</td>
+                  <td class="num">
+                    {v.collectedTodayCents > 0
+                      ? formatCents(v.collectedTodayCents)
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      }
+    </section>
+
+    <section class="sales-report-section sales-report-voided mt-8">
+      <h4 class="mb-2 font-semibold">Procedures removed (error / refunded)</h4>
+      <p class="mb-3 text-sm text-muted-foreground">
+        Lines voided on {report.dateLabel}. Excluded from visit charges; cash
+        collected on this date is not reversed.
+      </p>
+      {
+        report.voidedLineCount === 0 ? (
+          <p class="text-sm text-muted-foreground">
+            No procedure lines were removed on this date.
+          </p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Time removed</th>
+                <th>Patient</th>
+                <th>Visit date</th>
+                <th>Procedure</th>
+                <th>Type</th>
+                <th class="num">Amount</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.voidedLines.map((row) => (
+                <tr>
+                  <td>{formatTime(row.voidedAt)}</td>
+                  <td>{row.patientName}</td>
+                  <td>{row.visitDateLabel}</td>
+                  <td>{row.catalogName}</td>
+                  <td>
+                    <span class="void-tag">{row.categoryLabel}</span>
+                  </td>
+                  <td class="num struck">
+                    {formatCents(row.lineTotalCents)}
+                  </td>
+                  <td>
+                    {row.voidReason?.replace(
+                      /^\[(ERROR|REFUNDED)\]\s*/i,
+                      "",
+                    ) ?? "—"}
+                    {row.voidedByEmail ? (
+                      <span class="block text-xs text-muted-foreground">
+                        By {row.voidedByEmail}
+                      </span>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      }
+    </section>
+
+    <section class="sales-report-section mt-8">
+      <h4 class="mb-2 font-semibold">Payments received</h4>
+      {
+        report.payments.length === 0 ? (
+          <p class="text-sm text-muted-foreground">
+            No payments recorded for this date.
+          </p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Patient</th>
+                <th>Method</th>
+                <th class="num">Amount</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.payments.map((p) => (
+                <tr>
+                  <td>{formatTime(p.recordedAt)}</td>
+                  <td>{p.patientName}</td>
+                  <td>{p.method}</td>
+                  <td class="num">{formatCents(p.amountCents)}</td>
+                  <td>{p.reference ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )
+      }
+    </section>
+
+    <footer class="mt-10 border-t border-border pt-4 text-center text-xs text-muted-foreground">
+      <p>Prepared for {CLINIC_DOCTOR}</p>
+      <p class="mt-1">End of daily sales report — {report.dateLabel}</p>
+    </footer>
+  </article>
+</AppShell>

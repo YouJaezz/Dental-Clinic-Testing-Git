@@ -1,0 +1,24 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { AdminChangeHistory } from "@/components/AdminChangeHistory";
+
+const isAdmin =
+  Astro.locals.userRole === "ADMIN_I" ||
+  Astro.locals.userRole === "ADMIN_II";
+---
+
+<AppShell title="Change history">
+  {
+    isAdmin ? (
+      <AdminChangeHistory client:load />
+    ) : (
+      <p class="text-destructive">
+        You do not have access to this page.{" "}
+        <a href="/patients" class="underline underline-offset-4">
+          Return to patients
+        </a>
+        .
+      </p>
+    )
+  }
+</AppShell>

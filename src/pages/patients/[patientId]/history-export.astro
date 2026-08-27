@@ -1,0 +1,32 @@
+---
+import PatientHistoryDocument from "@/components/PatientHistoryDocument.astro";
+import HistoryExportLayout from "@/layouts/HistoryExportLayout.astro";
+import { filterPatientHistoryForPrint } from "@/lib/patient-history-print-view";
+import { loadPatientHistory } from "@/lib/patient-history";
+
+const patientId = Astro.params.patientId;
+if (!patientId) {
+  return Astro.redirect("/patients");
+}
+
+const data = await loadPatientHistory(patientId);
+if (!data) {
+  return Astro.redirect("/patients");
+}
+
+const rangeRaw = (Astro.url.searchParams.get("range") ?? "all").trim();
+const view = filterPatientHistoryForPrint(data, rangeRaw);
+const title = `${data.patient.lastName}, ${data.patient.firstName} — history`;
+---
+
+<HistoryExportLayout title={title}>
+  <PatientHistoryDocument
+    printSurface
+    patient={data.patient}
+    visitsShown={view.visitsShown}
+    totalsShown={view.totalsShown}
+    scopeDescription={view.scopeDescription}
+    invalidRange={view.invalidRange}
+    rangeRaw={view.rangeRaw}
+  />
+</HistoryExportLayout>

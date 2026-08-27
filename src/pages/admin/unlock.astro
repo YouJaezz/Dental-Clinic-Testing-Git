@@ -1,0 +1,12 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { AdminGateUnlock } from "@/components/AdminGateUnlock";
+
+if (Astro.locals.userRole !== "ADMIN_I") {
+  return Astro.redirect("/admin");
+}
+---
+
+<AppShell title="Administration passcode" subtitle="Extra security for Administration and Change history">
+  <AdminGateUnlock client:load returnTo={Astro.url.searchParams.get("return") ?? "/admin"} />
+</AppShell>

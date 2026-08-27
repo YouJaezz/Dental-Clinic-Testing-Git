@@ -1,0 +1,324 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_DOCTOR,
+  CLINIC_DOCTOR_CREDENTIAL,
+  CLINIC_DOCTOR_LICENSE_NO,
+  CLINIC_FACEBOOK,
+  CLINIC_NAME,
+  CLINIC_PHONE,
+} from "@/lib/clinic-branding";
+import { PatientHistoryExport } from "@/components/PatientHistoryExport";
+import { formatManilaDateLong } from "@/lib/manila-date";
+import { formatCents } from "@/lib/money";
+import { filterPatientHistoryForPrint } from "@/lib/patient-history-print-view";
+import { loadPatientHistory } from "@/lib/patient-history";
+import { resolvePatientDateOfBirthDisplay } from "@/lib/patient-age";
+
+const patientId = Astro.params.patientId;
+if (!patientId) {
+  return Astro.redirect("/patients");
+}
+
+const data = await loadPatientHistory(patientId);
+if (!data) {
+  return Astro.redirect("/patients");
+}
+
+const { patient } = data;
+const pathname = Astro.url.pathname;
+const rangeRaw = (Astro.url.searchParams.get("range") ?? "all").trim();
+const view = filterPatientHistoryForPrint(data, rangeRaw);
+const {
+  visitsShown,
+  totalsShown,
+  scopeDescription,
+  invalidRange,
+  visitDateOptions,
+} = view;
+const title = `Print · ${patient.firstName} ${patient.lastName}`;
+const patientDob = resolvePatientDateOfBirthDisplay(
+  patient.dateOfBirth,
+  patient.age,
+);
+---
+
+<AppShell title={title}>
+  <style is:global>
+    @media print {
+      body aside {
+        display: none !important;
+      }
+      body .print-hide {
+        display: none !important;
+      }
+      body main {
+        padding: 0.5rem !important;
+      }
+      body h1 {
+        font-size: 1.25rem !important;
+      }
+      .print-signoff {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+
+  <div class="print-hide mb-4 flex flex-wrap items-start gap-2">
+    <button
+      type="button"
+      class="rounded-md border bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+      onclick="window.print()"
+    >
+      Print
+    </button>
+    <PatientHistoryExport
+      client:load
+      patientFirstName={patient.firstName}
+      patientLastName={patient.lastName}
+      rangeKey={view.invalidRange ? "all" : view.rangeRaw}
+    />
+    <a
+      href="/patients"
+      class="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+    >
+      Back to patients
+    </a>
+  </div>
+
+  <form
+    class="print-hide mb-6 max-w-lg space-y-2 rounded-lg border bg-muted/30 p-4"
+    method="get"
+    action={pathname}
+  >
+    <label for="range" class="text-sm font-medium">What to print or download</label>
+    <select
+      id="range"
+      name="range"
+      class="h-10 w-full rounded-md border bg-background px-3 text-sm"
+    >
+      <option value="all" selected={view.rangeRaw === "all"}>
+        All visits (full history)
+      </option>
+      {
+        visitDateOptions.map((ymd) => (
+          <option value={ymd} selected={view.rangeRaw === ymd}>
+            {formatManilaDateLong(ymd)}
+          </option>
+        ))
+      }
+    </select>
+    <p class="text-xs text-muted-foreground">
+      Dates use the Philippines (Manila) calendar day of each visit. Pick one
+      day for that visit only, or choose full history — then use Print or
+      Download PDF.
+    </p>
+    <button
+      type="submit"
+      class="rounded-md border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+    >
+      Update preview
+    </button>
+  </form>
+
+  <article
+    id="patient-history-document"
+    class="max-w-4xl space-y-6 text-sm leading-relaxed"
+  >
+    <header class="border-b pb-4 text-center">
+      <p class="text-base font-semibold">{CLINIC_NAME}</p>
+      <p class="text-sm">{CLINIC_DOCTOR}</p>
+      <p class="text-muted-foreground">{CLINIC_ADDRESS}</p>
+      <p class="text-muted-foreground">
+        Facebook: {CLINIC_FACEBOOK} · Contact: {CLINIC_PHONE}
+      </p>
+      <p class="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
+        Patient record
+      </p>
+      <p
+        class:list={[
+          "mt-1 text-xs",
+          invalidRange ? "text-destructive" : "text-muted-foreground",
+        ]}
+      >
+        {scopeDescription}
+      </p>
+    </header>
+
+    <section class="space-y-1">
+      <h2 class="text-base font-semibold">Patient</h2>
+      <p>
+        <strong>{patient.firstName} {patient.lastName}</strong>
+      </p>
+      {patientDob.ymd ? (
+        <p>
+          Date of birth: {formatManilaDateLong(patientDob.ymd)}
+          {patientDob.isEstimated ? " (approximate, from recorded age)" : ""}
+        </p>
+      ) : null}
+      {patient.age != null ? <p>Age: {patient.age}</p> : null}
+      {patient.gender ? <p>Gender: {patient.gender}</p> : null}
+      {patient.civilStatus ? (
+        <p>Civil status: {patient.civilStatus}</p>
+      ) : null}
+      {patient.address ? <p>Address: {patient.address}</p> : null}
+      {patient.contactNumber ? (
+        <p>Contact #: {patient.contactNumber}</p>
+      ) : null}
+      {patient.medicalHistory ? (
+        <p class="whitespace-pre-wrap">
+          Medical history: {patient.medicalHistory}
+        </p>
+      ) : null}
+      {patient.notes ? (
+        <p class="whitespace-pre-wrap">Notes: {patient.notes}</p>
+      ) : null}
+    </section>
+
+    <section class="rounded-md border bg-muted/30 p-3">
+      <h2 class="mb-2 text-base font-semibold">
+        {view.rangeRaw === "all" || invalidRange
+          ? "Overall (included visits)"
+          : "Overall (selected day)"}
+      </h2>
+      <p>
+        Total charges: <strong>{formatCents(totalsShown.chargesCents)}</strong>{" "}
+        · Paid: <strong>{formatCents(totalsShown.paidCents)}</strong> · Balance:{" "}
+        <strong>{formatCents(totalsShown.balanceCents)}</strong>
+      </p>
+    </section>
+
+    {
+      visitsShown.map((block) => (
+        <section class="break-inside-avoid space-y-3 border-b pb-6">
+          <h2 class="text-base font-semibold">
+            Visit ·{" "}
+            {new Date(block.visit.visitDate).toLocaleString("en-PH", {
+              timeZone: "Asia/Manila",
+            })}
+            {block.visit.status === "OPEN" ? (
+              <span class="ml-2 text-xs font-normal text-muted-foreground">
+                (Open)
+              </span>
+            ) : (
+              <span class="ml-2 text-xs font-normal text-muted-foreground">
+                (Closed)
+              </span>
+            )}
+          </h2>
+          {block.visit.notes ? (
+            <p class="whitespace-pre-wrap text-muted-foreground">
+              Visit notes: {block.visit.notes}
+            </p>
+          ) : null}
+          <p class="text-xs text-muted-foreground">
+            This visit — Charges {formatCents(block.summary.chargesCents)} · Paid{" "}
+            {formatCents(block.summary.paidCents)} · Balance{" "}
+            {formatCents(block.summary.balanceCents)}
+          </p>
+
+          <div>
+            <h3 class="mb-1 font-medium">Procedures</h3>
+            {block.procedureLines.length === 0 ? (
+              <p class="text-muted-foreground">None recorded.</p>
+            ) : (
+              <table class="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr class="border-b">
+                    <th class="py-1 pr-2">When</th>
+                    <th class="py-1 pr-2">Procedure</th>
+                    <th class="py-1 pr-2">Notes</th>
+                    <th class="py-1 pr-2 text-right">Qty</th>
+                    <th class="py-1 pr-2 text-right">Teeth</th>
+                    <th class="py-1 text-right">Line total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {block.procedureLines.map((r) => {
+                    const teeth = r.toothNumbers;
+                    const hasTeeth = teeth && teeth.length > 0;
+                    return (
+                      <tr class="border-b border-border/60">
+                        <td class="py-1 pr-2 whitespace-nowrap text-muted-foreground">
+                          {new Date(r.createdAt).toLocaleString()}
+                        </td>
+                        <td class="py-1 pr-2">
+                          {r.catalogName}
+                          {r.catalogCode ? ` (${r.catalogCode})` : ""}
+                          {r.procedureLevelLabelSnapshot ? (
+                            <span class="block text-muted-foreground">
+                              Level: {r.procedureLevelLabelSnapshot}
+                            </span>
+                          ) : null}
+                        </td>
+                        <td class="py-1 pr-2 max-w-[12rem] whitespace-pre-wrap text-muted-foreground">
+                          {r.lineNotes ?? "—"}
+                        </td>
+                        <td class="py-1 pr-2 text-right">
+                          {hasTeeth ? "—" : r.quantity}
+                        </td>
+                        <td class="py-1 pr-2 text-right">
+                          {hasTeeth ? teeth.join(", ") : "—"}
+                        </td>
+                        <td class="py-1 text-right">
+                          {formatCents(r.lineTotalCents)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div>
+            <h3 class="mb-1 font-medium">Payments</h3>
+            {block.payments.length === 0 ? (
+              <p class="text-muted-foreground">None recorded.</p>
+            ) : (
+              <table class="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr class="border-b">
+                    <th class="py-1 pr-2">When</th>
+                    <th class="py-1 pr-2">Method</th>
+                    <th class="py-1 pr-2">Status</th>
+                    <th class="py-1 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {block.payments.map((pay) => (
+                    <tr class="border-b border-border/60">
+                      <td class="py-1 pr-2 whitespace-nowrap text-muted-foreground">
+                        {new Date(pay.recordedAt).toLocaleString()}
+                      </td>
+                      <td class="py-1 pr-2">{pay.method}</td>
+                      <td class="py-1 pr-2">{pay.status}</td>
+                      <td class="py-1 text-right">
+                        {formatCents(pay.amountCents)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      ))
+    }
+
+    {visitsShown.length === 0 ? (
+      <p class="text-muted-foreground">
+        {view.rangeRaw !== "all" && !invalidRange
+          ? "No visits on the selected date."
+          : "No visits on file."}
+      </p>
+    ) : null}
+
+    <footer class="print-signoff mt-12 border-t pt-6 text-center text-sm">
+      <p class="font-medium leading-snug">{CLINIC_DOCTOR_CREDENTIAL}</p>
+      <p class="text-muted-foreground">License no. {CLINIC_DOCTOR_LICENSE_NO}</p>
+    </footer>
+  </article>
+</AppShell>

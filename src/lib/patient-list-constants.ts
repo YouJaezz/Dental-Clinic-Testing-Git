@@ -1,0 +1,2 @@
+export const PATIENT_LIST_DEFAULT_PAGE_SIZE = 50;
+export const PATIENT_LIST_MAX_PAGE_SIZE = 100;

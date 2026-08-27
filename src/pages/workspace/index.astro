@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { WorkspaceOverview } from "@/components/WorkspaceOverview";
+---
+
+<AppShell title="Workspace">
+  <WorkspaceOverview client:load initialRole={Astro.locals.userRole} />
+</AppShell>

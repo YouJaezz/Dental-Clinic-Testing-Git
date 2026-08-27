@@ -1,0 +1,253 @@
+---
+import {
+  CLINIC_ADDRESS,
+  CLINIC_DOCTOR,
+  CLINIC_DOCTOR_CREDENTIAL,
+  CLINIC_DOCTOR_LICENSE_NO,
+  CLINIC_FACEBOOK,
+  CLINIC_NAME,
+  CLINIC_PHONE,
+} from "@/lib/clinic-branding";
+import { formatCents } from "@/lib/money";
+import { formatManilaDateLong } from "@/lib/manila-date";
+import { resolvePatientDateOfBirthDisplay } from "@/lib/patient-age";
+import type { PatientHistoryPayload } from "@/lib/patient-history";
+import type { PatientHistoryVisitBlock } from "@/lib/patient-history";
+import "@/styles/patient-history-document.css";
+
+interface Props {
+  patient: PatientHistoryPayload["patient"];
+  visitsShown: PatientHistoryVisitBlock[];
+  totalsShown: {
+    chargesCents: number;
+    paidCents: number;
+    balanceCents: number;
+  };
+  scopeDescription: string;
+  invalidRange: boolean;
+  rangeRaw: string;
+  /** When true, layout matches browser print (preview + PDF). */
+  printSurface?: boolean;
+}
+
+const {
+  patient,
+  visitsShown,
+  totalsShown,
+  scopeDescription,
+  invalidRange,
+  rangeRaw,
+  printSurface = false,
+} = Astro.props;
+
+const patientDob = resolvePatientDateOfBirthDisplay(
+  patient.dateOfBirth,
+  patient.age,
+);
+---
+
+<article
+  id="patient-history-document"
+  class:list={["history-doc", printSurface && "history-doc--print-surface"]}
+>
+  <header class="history-doc__header">
+    <p class="history-doc__clinic-name">{CLINIC_NAME}</p>
+    <p class="history-doc__doctor">{CLINIC_DOCTOR}</p>
+    <p class="history-doc__meta">{CLINIC_ADDRESS}</p>
+    <p class="history-doc__meta">
+      Facebook: {CLINIC_FACEBOOK} · Contact: {CLINIC_PHONE}
+    </p>
+    <p class="history-doc__record-label">Patient record</p>
+    <p
+      class:list={[
+        "history-doc__scope",
+        invalidRange && "history-doc__scope--error",
+      ]}
+    >
+      {scopeDescription}
+    </p>
+  </header>
+
+  <section class="history-doc__section">
+    <h2 class="history-doc__section-title">Patient</h2>
+    <p>
+      <strong>{patient.firstName} {patient.lastName}</strong>
+    </p>
+    {patientDob.ymd ? (
+      <p>
+        Date of birth: {formatManilaDateLong(patientDob.ymd)}
+        {patientDob.isEstimated ? " (approximate, from recorded age)" : ""}
+      </p>
+    ) : null}
+    {patient.age != null ? <p>Age: {patient.age}</p> : null}
+    {patient.gender ? <p>Gender: {patient.gender}</p> : null}
+    {patient.civilStatus ? (
+      <p>Civil status: {patient.civilStatus}</p>
+    ) : null}
+    {patient.address ? <p>Address: {patient.address}</p> : null}
+    {patient.contactNumber ? <p>Contact #: {patient.contactNumber}</p> : null}
+    {patient.medicalHistory ? (
+      <p class="history-doc__visit-notes">
+        Medical history: {patient.medicalHistory}
+      </p>
+    ) : null}
+    {patient.notes ? (
+      <p class="history-doc__visit-notes">Notes: {patient.notes}</p>
+    ) : null}
+  </section>
+
+  <section class="history-doc__summary-box">
+    <h2 class="history-doc__section-title">
+      {rangeRaw === "all" || invalidRange
+        ? "Overall (included visits)"
+        : "Overall (selected day)"}
+    </h2>
+    <p>
+      Total charges: <strong>{formatCents(totalsShown.chargesCents)}</strong> ·
+      Paid: <strong>{formatCents(totalsShown.paidCents)}</strong> · Balance:{" "}
+      <strong>{formatCents(totalsShown.balanceCents)}</strong>
+    </p>
+  </section>
+
+  {
+    visitsShown.map((block) => (
+      <section class="history-doc__visit">
+        <h2 class="history-doc__visit-title">
+          Visit ·{" "}
+          {new Date(block.visit.visitDate).toLocaleString("en-PH", {
+            timeZone: "Asia/Manila",
+          })}
+          {block.visit.status === "OPEN" ? " (Open)" : " (Closed)"}
+        </h2>
+        {block.visit.notes ? (
+          <p class="history-doc__visit-notes">
+            Visit notes: {block.visit.notes}
+          </p>
+        ) : null}
+        <p class="history-doc__visit-meta">
+          This visit — Charges {formatCents(block.summary.chargesCents)} · Paid{" "}
+          {formatCents(block.summary.paidCents)} · Balance{" "}
+          {formatCents(block.summary.balanceCents)}
+        </p>
+
+        <h3 class="history-doc__subsection-title">Procedures</h3>
+        {block.procedureLines.length === 0 ? (
+          <p class="history-doc__empty">None recorded.</p>
+        ) : (
+          <table class="history-doc__table">
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Procedure</th>
+                <th>Notes</th>
+                <th class="history-doc__num">Qty</th>
+                <th class="history-doc__num">Teeth</th>
+                <th class="history-doc__num">Line total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {block.procedureLines.map((r) => {
+                const teeth = r.toothNumbers;
+                const hasTeeth = teeth && teeth.length > 0;
+                const voidLabel =
+                  r.voided && r.voidCategory
+                    ? r.voidCategory === "REFUNDED"
+                      ? "refunded"
+                      : "error"
+                    : null;
+                return (
+                  <tr class:list={[r.voided && "history-doc__row--voided"]}>
+                    <td class="history-doc__muted">
+                      {new Date(r.createdAt).toLocaleString("en-PH", {
+                        timeZone: "Asia/Manila",
+                      })}
+                    </td>
+                    <td>
+                      {r.catalogName}
+                      {r.catalogCode ? ` (${r.catalogCode})` : ""}
+                      {voidLabel ? (
+                        <span class="history-doc__void-tag">
+                          ({voidLabel})
+                        </span>
+                      ) : null}
+                      {r.procedureLevelLabelSnapshot ? (
+                        <span class="history-doc__level">
+                          Level: {r.procedureLevelLabelSnapshot}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td class="history-doc__notes history-doc__muted">
+                      {r.voided && r.voidReason
+                        ? r.voidReason
+                        : (r.lineNotes ?? "—")}
+                    </td>
+                    <td class="history-doc__num">
+                      {hasTeeth ? "—" : r.quantity}
+                    </td>
+                    <td class="history-doc__num history-doc__muted">
+                      {hasTeeth ? teeth.join(", ") : "—"}
+                    </td>
+                    <td class="history-doc__num">
+                      {r.voided ? (
+                        <span class="history-doc__void-amount">—</span>
+                      ) : (
+                        formatCents(r.lineTotalCents)
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        <h3 class="history-doc__subsection-title">Payments</h3>
+        {block.payments.length === 0 ? (
+          <p class="history-doc__empty">None recorded.</p>
+        ) : (
+          <table class="history-doc__table">
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th class="history-doc__num">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {block.payments.map((pay) => (
+                <tr>
+                  <td class="history-doc__muted">
+                    {new Date(pay.recordedAt).toLocaleString("en-PH", {
+                      timeZone: "Asia/Manila",
+                    })}
+                  </td>
+                  <td>{pay.method}</td>
+                  <td>{pay.status}</td>
+                  <td class="history-doc__num">
+                    {formatCents(pay.amountCents)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    ))
+  }
+
+  {visitsShown.length === 0 ? (
+    <p class="history-doc__empty">
+      {rangeRaw !== "all" && !invalidRange
+        ? "No visits on the selected date."
+        : "No visits on file."}
+    </p>
+  ) : null}
+
+  <footer class="history-doc__signoff">
+    <p class="history-doc__signoff-name">{CLINIC_DOCTOR_CREDENTIAL}</p>
+    <p class="history-doc__signoff-license">
+      License no. {CLINIC_DOCTOR_LICENSE_NO}
+    </p>
+  </footer>
+</article>

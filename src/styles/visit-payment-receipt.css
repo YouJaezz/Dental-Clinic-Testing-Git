@@ -1,0 +1,215 @@
+/* Printable visit billing statement / payment receipt */
+.visit-receipt {
+  box-sizing: border-box;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 10mm 12mm;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  color: #111827;
+  background: #fff;
+}
+
+.visit-receipt * {
+  box-sizing: border-box;
+}
+
+.visit-receipt__header {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.visit-receipt__clinic-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.visit-receipt__doctor,
+.visit-receipt__meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.visit-receipt__doc-type {
+  margin: 0.65rem 0 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #374151;
+}
+
+.visit-receipt__notice {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  font-size: 9pt;
+  line-height: 1.4;
+  color: #92400e;
+}
+
+.visit-receipt__section-title {
+  margin: 0 0 0.35rem;
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #374151;
+}
+
+.visit-receipt__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+  font-size: 9.5pt;
+}
+
+.visit-receipt__table th,
+.visit-receipt__table td {
+  border: 1px solid #d1d5db;
+  padding: 0.3rem 0.45rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.visit-receipt__table th {
+  background: #ffc4d1;
+  font-weight: 600;
+}
+
+.visit-receipt__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.visit-receipt__totals {
+  margin-top: 0.5rem;
+  border: 2px solid #374151;
+  padding: 0.55rem 0.65rem;
+}
+
+.visit-receipt__totals-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.15rem 0;
+  font-size: 10pt;
+}
+
+.visit-receipt__totals-row--balance {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #9ca3af;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.visit-receipt__totals-row--balance-due {
+  color: #b91c1c;
+}
+
+.visit-receipt__totals-row--paid-full {
+  color: #15803d;
+}
+
+.visit-receipt__footer {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #d1d5db;
+  font-size: 8.5pt;
+  color: #6b7280;
+  text-align: center;
+}
+
+.visit-receipt__signatures {
+  margin-top: 1.25rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.visit-receipt__sig-intro {
+  margin: 0 0 0.75rem;
+  font-size: 9pt;
+  color: #4b5563;
+}
+
+.visit-receipt__sig-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.visit-receipt__sig-box {
+  min-height: 6.5rem;
+}
+
+.visit-receipt__sig-line {
+  height: 2.75rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid #111827;
+}
+
+.visit-receipt__sig-role {
+  margin: 0;
+  font-size: 8.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.visit-receipt__sig-name {
+  margin: 0.15rem 0 0;
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+.visit-receipt__sig-meta {
+  margin: 0.1rem 0 0;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  color: #6b7280;
+}
+
+.visit-receipt__sig-date {
+  margin: 0.5rem 0 0;
+  font-size: 9pt;
+  color: #374151;
+}
+
+.visit-receipt__empty {
+  font-size: 9.5pt;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0 0 0.75rem;
+}
+
+@media print {
+  body aside,
+  body main > header,
+  body .print-hide {
+    display: none !important;
+  }
+  body main {
+    padding: 0.5rem !important;
+  }
+  .visit-receipt {
+    max-width: none;
+  }
+  .visit-receipt__notice,
+  .visit-receipt__totals,
+  .visit-receipt__signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .visit-receipt__sig-grid {
+    gap: 2rem;
+  }
+}

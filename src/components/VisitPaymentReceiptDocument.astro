@@ -1,0 +1,228 @@
+---
+import "@/styles/visit-payment-receipt.css";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_DOCTOR,
+  CLINIC_DOCTOR_CREDENTIAL,
+  CLINIC_DOCTOR_LICENSE_NO,
+  CLINIC_FACEBOOK,
+  CLINIC_NAME,
+  CLINIC_PHONE,
+} from "@/lib/clinic-branding";
+import type { Summary } from "@/lib/clinical-types";
+import { formatManilaDateLong, toManilaDateKey } from "@/lib/manila-date";
+import { formatCents } from "@/lib/money";
+
+interface Patient {
+  firstName: string;
+  lastName: string;
+  contactNumber: string | null;
+}
+
+interface Props {
+  patient: Patient;
+  summary: Summary;
+  /** When the statement was generated (ISO or display string). */
+  generatedAtLabel: string;
+  visitDateLabel: string;
+}
+
+const { patient, summary, generatedAtLabel, visitDateLabel } = Astro.props;
+
+const patientFullName = `${patient.lastName}, ${patient.firstName}`;
+
+const isFullyPaid = summary.balanceCents <= 0;
+const isOpenVisit = summary.visitStatus === "OPEN";
+const docType = isFullyPaid && !isOpenVisit
+  ? "Payment receipt"
+  : "Visit billing statement";
+
+function methodLabel(method: string): string {
+  const m = method.trim().toLowerCase();
+  if (m === "cash") return "Cash";
+  if (m === "card") return "Card";
+  if (m === "check") return "Check";
+  if (m === "other") return "Other";
+  return method;
+}
+
+function formatShortDate(iso: string): string {
+  try {
+    const ymd = toManilaDateKey(new Date(iso));
+    return formatManilaDateLong(ymd);
+  } catch {
+    return iso;
+  }
+}
+---
+
+<article id="visit-payment-receipt-document" class="visit-receipt">
+  <header class="visit-receipt__header">
+    <p class="visit-receipt__clinic-name">{CLINIC_NAME}</p>
+    <p class="visit-receipt__doctor">{CLINIC_DOCTOR}</p>
+    <p class="visit-receipt__meta">{CLINIC_ADDRESS}</p>
+    <p class="visit-receipt__meta">
+      {CLINIC_PHONE} · {CLINIC_FACEBOOK}
+    </p>
+    <p class="visit-receipt__doc-type">{docType}</p>
+  </header>
+
+  {
+    isOpenVisit || !isFullyPaid ? (
+      <p class="visit-receipt__notice">
+        <strong>Ongoing visit.</strong> Treatment may take several days or
+        weeks. Additional procedures can be added; payments may be made in
+        installments. This statement shows charges and payments recorded as of{" "}
+        <strong>{generatedAtLabel}</strong>. Print again after new procedures
+        or payments for an up-to-date balance.
+      </p>
+    ) : (
+      <p class="visit-receipt__notice" style="border-color: #bbf7d0; background: #f0fdf4; color: #166534;">
+        <strong>Balance settled</strong> for this visit as of {generatedAtLabel}
+        .
+      </p>
+    )
+  }
+
+  <section>
+    <p class="visit-receipt__section-title">Patient</p>
+    <p>
+      <strong>
+        {patient.lastName}, {patient.firstName}
+      </strong>
+      {patient.contactNumber ? (
+        <>
+          <br />
+          <span class="visit-receipt__meta">Contact: {patient.contactNumber}</span>
+        </>
+      ) : null}
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 9.5pt;">
+      Visit date: <strong>{visitDateLabel}</strong>
+      {" · "}
+      Status: <strong>{summary.visitStatus === "OPEN" ? "Open" : "Closed"}</strong>
+    </p>
+  </section>
+
+  <section style="margin-top: 1rem;">
+    <p class="visit-receipt__section-title">Charges (procedures)</p>
+    {
+      summary.chargeLines.length === 0 ? (
+        <p class="visit-receipt__empty">No procedure charges on this visit yet.</p>
+      ) : (
+        <table class="visit-receipt__table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Procedure</th>
+              <th class="visit-receipt__num">Qty</th>
+              <th class="visit-receipt__num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.chargeLines.map((line) => (
+              <tr>
+                <td>{formatShortDate(line.createdAt)}</td>
+                <td>{line.catalogName}</td>
+                <td class="visit-receipt__num">{line.quantity}</td>
+                <td class="visit-receipt__num">
+                  {formatCents(line.lineTotalCents)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    }
+  </section>
+
+  <section>
+    <p class="visit-receipt__section-title">Payments received</p>
+    {
+      summary.payments.length === 0 ? (
+        <p class="visit-receipt__empty">No payments recorded yet.</p>
+      ) : (
+        <table class="visit-receipt__table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Method</th>
+              <th>Reference</th>
+              <th class="visit-receipt__num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.payments.map((p) => (
+              <tr>
+                <td>{formatShortDate(p.recordedAt)}</td>
+                <td>{methodLabel(p.method)}</td>
+                <td>{p.reference ?? "—"}</td>
+                <td class="visit-receipt__num">{formatCents(p.amountCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    }
+  </section>
+
+  <div class="visit-receipt__totals">
+    <div class="visit-receipt__totals-row">
+      <span>Total charges</span>
+      <span>{formatCents(summary.chargesCents)}</span>
+    </div>
+    <div class="visit-receipt__totals-row">
+      <span>Total paid</span>
+      <span>{formatCents(summary.paidCents)}</span>
+    </div>
+    <div
+      class:list={[
+        "visit-receipt__totals-row",
+        "visit-receipt__totals-row--balance",
+        isFullyPaid
+          ? "visit-receipt__totals-row--paid-full"
+          : "visit-receipt__totals-row--balance-due",
+      ]}
+    >
+      <span>Balance due</span>
+      <span>{formatCents(Math.max(0, summary.balanceCents))}</span>
+    </div>
+  </div>
+
+  <footer class="visit-receipt__footer">
+    <p>
+      This document is a snapshot for the current visit only. It is not a
+      final tax invoice unless the balance due is zero and the visit is closed.
+    </p>
+    <p>Statement generated {generatedAtLabel} (Manila time).</p>
+  </footer>
+
+  <section class="visit-receipt__signatures print-signoff" aria-label="Signatures">
+    <p class="visit-receipt__section-title">Acknowledgment</p>
+    <p class="visit-receipt__sig-intro">
+      We acknowledge receipt of this billing statement
+      {summary.balanceCents > 0
+        ? " and the balance due shown above"
+        : ""}.
+    </p>
+    <div class="visit-receipt__sig-grid">
+      <div class="visit-receipt__sig-box">
+        <div class="visit-receipt__sig-line" aria-hidden="true"></div>
+        <p class="visit-receipt__sig-role">Patient</p>
+        <p class="visit-receipt__sig-name">{patientFullName}</p>
+        <p class="visit-receipt__sig-date">Date: _______________________</p>
+      </div>
+      <div class="visit-receipt__sig-box">
+        <div class="visit-receipt__sig-line" aria-hidden="true"></div>
+        <p class="visit-receipt__sig-role">Dentist</p>
+        <p class="visit-receipt__sig-name">{CLINIC_DOCTOR}</p>
+        <p class="visit-receipt__sig-meta">
+          {CLINIC_DOCTOR_CREDENTIAL}
+          <br />
+          License No. {CLINIC_DOCTOR_LICENSE_NO}
+        </p>
+        <p class="visit-receipt__sig-date">Date: _______________________</p>
+      </div>
+    </div>
+  </section>
+</article>

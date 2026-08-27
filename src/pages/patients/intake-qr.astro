@@ -1,0 +1,54 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { getRegistrationIntakeUrl } from "@/lib/app-url";
+import { CLINIC_NAME } from "@/lib/clinic-branding";
+
+const intakeUrl = getRegistrationIntakeUrl(Astro.url);
+const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(intakeUrl)}`;
+---
+
+<AppShell title="Patient registration QR">
+  <div class="mx-auto max-w-md space-y-6">
+    <p class="text-sm text-muted-foreground">
+      Display this code in the waiting area. Patients scan it with their phone
+      camera to open the registration form for <strong>{CLINIC_NAME}</strong>.
+      Submissions are added to the patient list automatically.
+    </p>
+
+    <div class="flex flex-col items-center rounded-lg border bg-card p-6 shadow-sm">
+      <img
+        src={qrImgUrl}
+        width="280"
+        height="280"
+        alt="QR code linking to patient registration"
+        class="rounded-md"
+      />
+      <p class="mt-4 break-all text-center text-xs text-muted-foreground">
+        {intakeUrl}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a
+        href={intakeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+      >
+        Open registration form
+      </a>
+      <a
+        href="/patients"
+        class="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+      >
+        Back to patients
+      </a>
+    </div>
+
+    <p class="text-xs text-muted-foreground">
+      Tip: Patients must reach this app on the same network (or your public
+      clinic URL). The link above is what the QR code opens — bookmark it if you
+      host the system online.
+    </p>
+  </div>
+</AppShell>

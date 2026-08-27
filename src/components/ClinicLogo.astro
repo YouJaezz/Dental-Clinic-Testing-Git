@@ -1,0 +1,25 @@
+---
+import { CLINIC_LOGO_SRC, CLINIC_NAME } from "@/lib/clinic-branding";
+
+interface Props {
+  size?: "sm" | "md" | "lg" | "xl";
+  class?: string;
+}
+
+const { size = "md", class: className = "" } = Astro.props;
+
+const sizeClass: Record<NonNullable<Props["size"]>, string> = {
+  sm: "h-12 w-12",
+  md: "h-20 w-20",
+  lg: "h-28 w-28",
+  xl: "h-36 w-36",
+};
+---
+
+<img
+  src={CLINIC_LOGO_SRC}
+  alt={`${CLINIC_NAME} logo`}
+  width="144"
+  height="144"
+  class:list={["object-contain", sizeClass[size], className]}
+/>

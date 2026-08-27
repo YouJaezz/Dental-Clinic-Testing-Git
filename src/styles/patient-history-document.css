@@ -1,0 +1,226 @@
+/* Shared layout for browser print and PDF export (matches print preview). */
+.history-doc {
+  box-sizing: border-box;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 10mm 12mm;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  color: #111827;
+  background: #fff;
+}
+
+.history-doc * {
+  box-sizing: border-box;
+}
+
+.history-doc__header {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Match original print page header (text-base / text-sm / text-xs). */
+.history-doc__clinic-name {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 600;
+  color: #111827;
+}
+
+.history-doc__doctor {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #111827;
+}
+
+.history-doc__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.history-doc__record-label {
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.history-doc__scope {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.history-doc__scope--error {
+  color: #b91c1c;
+}
+
+.history-doc__section {
+  margin-bottom: 1rem;
+}
+
+.history-doc__section-title {
+  margin: 0 0 0.35rem;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.history-doc__summary-box {
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 0.65rem;
+  margin-bottom: 1rem;
+  background: #f9fafb;
+}
+
+.history-doc__visit {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.history-doc__visit-title {
+  margin: 0 0 0.35rem;
+  font-size: 10.5pt;
+  font-weight: 700;
+}
+
+.history-doc__visit-meta {
+  margin: 0 0 0.5rem;
+  font-size: 8.5pt;
+  color: #4b5563;
+}
+
+.history-doc__visit-notes {
+  margin: 0 0 0.5rem;
+  font-size: 9pt;
+  color: #374151;
+  white-space: pre-wrap;
+}
+
+.history-doc__subsection-title {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 9.5pt;
+  font-weight: 600;
+}
+
+.history-doc__empty {
+  margin: 0;
+  font-size: 9pt;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.history-doc__row--voided td {
+  color: #6b7280;
+  text-decoration: line-through;
+  text-decoration-color: #9ca3af;
+}
+
+.history-doc__void-tag {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #b45309;
+  text-decoration: none;
+}
+
+.history-doc__void-amount {
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.history-doc__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  margin-bottom: 0.35rem;
+}
+
+.history-doc__table th {
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #374151;
+  padding: 0.2rem 0.35rem 0.25rem;
+  vertical-align: bottom;
+}
+
+.history-doc__table th.history-doc__num {
+  text-align: right;
+}
+
+.history-doc__table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.25rem 0.35rem;
+  vertical-align: top;
+}
+
+.history-doc__table td.history-doc__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.history-doc__table td.history-doc__muted {
+  color: #4b5563;
+}
+
+.history-doc__table td.history-doc__notes {
+  max-width: 9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.history-doc__level {
+  display: block;
+  font-size: 8pt;
+  color: #4b5563;
+}
+
+.history-doc__signoff {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #374151;
+  text-align: center;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.history-doc__signoff-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 10pt;
+}
+
+.history-doc__signoff-license {
+  margin: 0.15rem 0 0;
+  font-size: 9pt;
+  color: #4b5563;
+}
+
+/* Same layout as browser print — used for PDF capture too. */
+.history-doc--print-surface {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media print {
+  .history-doc {
+    max-width: none;
+    padding: 0;
+  }
+}

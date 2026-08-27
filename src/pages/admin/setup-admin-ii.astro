@@ -1,0 +1,15 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { AdminIISetup } from "@/components/AdminIISetup";
+
+if (Astro.locals.userRole !== "ADMIN_I") {
+  return Astro.redirect("/admin");
+}
+---
+
+<AppShell
+  title="Admin II setup"
+  subtitle="Required once before Administration is fully available"
+>
+  <AdminIISetup client:load />
+</AppShell>

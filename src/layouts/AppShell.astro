@@ -1,0 +1,76 @@
+---
+import "@/styles/globals.css";
+import { CLINIC_NAME } from "@/lib/clinic-branding";
+import ClinicLogo from "@/components/ClinicLogo.astro";
+import { LogoutButton } from "@/components/LogoutButton";
+import { PatientRegistryStats } from "@/components/PatientRegistryStats";
+import { WorkspaceNav } from "@/components/WorkspaceNav";
+import { ClinicLocaleInit } from "@/components/ClinicLocaleInit";
+import { SystemSettingsBar } from "@/components/SystemSettingsBar";
+import { AppShellNav } from "@/components/AppShellNav";
+import { VisitBillingLabel } from "@/components/VisitBillingLabel";
+
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+const path = Astro.url.pathname;
+const { userEmail, userRole, userLocale } = Astro.locals;
+const showWorkspaceNav = path.startsWith("/workspace");
+---
+
+<!doctype html>
+<html lang={userLocale === "tl" ? "tl" : "en"}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#EFAAC4" />
+    <link rel="icon" type="image/png" href="/clinic-logo.png" />
+    <title>{title} · {CLINIC_NAME}</title>
+  </head>
+  <body>
+    <ClinicLocaleInit client:load locale={userLocale} />
+    <VisitBillingLabel client:load />
+    <div class="flex min-h-screen">
+      <aside class="clinic-sidebar flex w-60 shrink-0 flex-col">
+        <div class="clinic-sidebar-brand">
+          <a
+            href="/patients"
+            class="flex flex-col items-center gap-2 text-center no-underline"
+          >
+            <ClinicLogo size="lg" />
+            <span class="text-sm font-semibold leading-snug text-foreground">
+              {CLINIC_NAME}
+            </span>
+            <span class="text-xs text-muted-foreground" id="nav-visit-billing-label">
+              Visit billing
+            </span>
+          </a>
+          <PatientRegistryStats client:load />
+        </div>
+        <AppShellNav client:load path={path} userRole={userRole} />
+        <div class="mt-auto border-t border-border bg-muted/40 p-3">
+          <p class="truncate text-xs text-muted-foreground">{userEmail}</p>
+          <p class="mb-2 text-xs font-semibold capitalize text-foreground">
+            {userRole}
+          </p>
+          <LogoutButton client:load />
+        </div>
+      </aside>
+      <main class="clinic-main-panel">
+        <SystemSettingsBar client:load />
+        <header class="mb-6">
+          <h1 class="clinic-page-title">{title}</h1>
+          {subtitle ? <p class="clinic-page-subtitle !mb-0">{subtitle}</p> : null}
+        </header>
+        {showWorkspaceNav ? (
+          <WorkspaceNav client:load querySuffix={Astro.url.search} />
+        ) : null}
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

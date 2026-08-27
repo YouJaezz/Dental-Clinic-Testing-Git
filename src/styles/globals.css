@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand: blush #EFAAC4 (actions) · pink #FFC4D1 (highlights) */
+    --clinic-sage: 88 18% 83%;
+    --clinic-blush: 336 72% 80%;
+    --clinic-pink: 345 100% 88%;
+    --clinic-cream: 40 20% 97%;
+
+    --background: 0 0% 100%;
+    --foreground: 220 16% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 16% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 16% 18%;
+    --primary: 336 72% 80%;
+    --primary-foreground: 330 30% 18%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 28%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 345 100% 88%;
+    --accent-foreground: 330 28% 22%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 336 55% 62%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(
+        ellipse 100% 70% at 100% 0%,
+        hsl(var(--clinic-pink) / 0.2),
+        transparent 50%
+      ),
+      linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .clinic-auth-panel {
+    @apply relative flex flex-col items-center justify-center overflow-hidden border-r border-border bg-white p-8 text-center lg:p-12;
+  }
+
+  .clinic-auth-panel::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--clinic-blush)) 0%,
+      hsl(var(--clinic-pink)) 100%
+    );
+    pointer-events: none;
+  }
+
+  .clinic-sidebar {
+    @apply border-r border-border bg-white shadow-[1px_0_0_0_hsl(var(--border))];
+  }
+
+  .clinic-sidebar-brand {
+    @apply border-b border-border bg-white p-4;
+  }
+
+  .clinic-nav-link {
+    @apply block rounded-md px-3 py-2 text-sm font-medium transition-colors;
+  }
+
+  .clinic-nav-link--active {
+    @apply bg-primary text-primary-foreground shadow-sm;
+  }
+
+  .clinic-nav-link--idle {
+    @apply text-muted-foreground hover:bg-accent/60 hover:text-foreground;
+  }
+
+  .clinic-main-panel {
+    @apply min-w-0 flex-1 bg-transparent p-6 lg:p-8;
+  }
+
+  .clinic-page-title {
+    @apply mb-1 text-2xl font-semibold tracking-tight text-foreground;
+  }
+
+  .clinic-page-subtitle {
+    @apply mb-6 text-sm text-muted-foreground;
+  }
+
+  .clinic-card {
+    @apply rounded-lg border border-border bg-card shadow-sm;
+  }
+}
+
+@layer utilities {
+  /* Links/labels on white — darker blush (buttons use bg-primary) */
+  .text-primary {
+    color: hsl(336 42% 42%);
+  }
+}

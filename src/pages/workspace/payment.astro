@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { WorkspacePayment } from "@/components/WorkspacePayment";
+---
+
+<AppShell title="Payment">
+  <WorkspacePayment client:load initialRole={Astro.locals.userRole} />
+</AppShell>

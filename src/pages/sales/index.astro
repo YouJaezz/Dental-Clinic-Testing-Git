@@ -1,0 +1,25 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { DailySalesHub } from "@/components/DailySalesHub";
+
+const role = Astro.locals.userRole;
+const canView =
+  role === "ADMIN_I" || role === "ADMIN_II" || role === "USER";
+const isAdmin = role === "ADMIN_I" || role === "ADMIN_II";
+---
+
+<AppShell title="Daily sales">
+  {
+    canView ? (
+      <DailySalesHub client:load isAdmin={isAdmin} />
+    ) : (
+      <p class="text-destructive">
+        You do not have access to daily sales.{" "}
+        <a href="/patients" class="underline underline-offset-4">
+          Return to patients
+        </a>
+        .
+      </p>
+    )
+  }
+</AppShell>

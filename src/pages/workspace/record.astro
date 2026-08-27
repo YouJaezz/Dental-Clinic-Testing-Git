@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { WorkspaceRecord } from "@/components/WorkspaceRecord";
+---
+
+<AppShell title="Visit record">
+  <WorkspaceRecord client:load initialRole={Astro.locals.userRole} />
+</AppShell>
