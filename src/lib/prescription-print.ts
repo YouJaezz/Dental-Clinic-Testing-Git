@@ -70,6 +70,7 @@ export async function loadPrescriptionPrint(prescriptionId: string) {
       doseStrength: line.doseStrength,
       instructions: line.instructions,
       quantity: line.quantity ?? 1,
+      quantityUnit: line.quantityUnit ?? null,
       sortOrder: line.sortOrder ?? index,
     })),
   };

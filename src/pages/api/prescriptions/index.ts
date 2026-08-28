@@ -40,6 +40,7 @@ const lineSchema = z.object({
   doseStrength: z.string().trim().optional().nullable(),
   instructions: z.string().trim().optional().nullable(),
   quantity: z.number().int().min(1).max(9999),
+  quantityUnit: z.string().trim().max(20).optional().nullable(),
 });
 
 const createSchema = z.object({

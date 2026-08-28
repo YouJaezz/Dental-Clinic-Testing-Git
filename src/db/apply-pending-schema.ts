@@ -220,6 +220,23 @@ function applySqlite() {
     );
   }
 
+  if (
+    hasTable(db, "prescription_lines") &&
+    !hasColumn(db, "prescription_lines", "quantity_unit")
+  ) {
+    console.log("Applying prescription line quantity unit…");
+    db.exec("ALTER TABLE prescription_lines ADD COLUMN quantity_unit text;");
+    db.exec(`
+      UPDATE prescription_lines SET quantity_unit = CASE
+        WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%tablet%' THEN 'tabs'
+        WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%capsule%' THEN 'caps'
+        WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%solution%' THEN 'mL'
+        ELSE 'caps'
+      END
+      WHERE quantity_unit IS NULL;
+    `);
+  }
+
   db.close();
   console.log("Schema update complete:", dbPath);
 }

@@ -372,6 +372,7 @@ export const prescriptionLines = pgTable(
     doseStrength: text("dose_strength"),
     instructions: text("instructions"),
     quantity: integer("quantity").notNull().default(1),
+    quantityUnit: text("quantity_unit"),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: ts("created_at").$defaultFn(() => new Date()),
   },

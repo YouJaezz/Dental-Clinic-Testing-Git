@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +23,14 @@ export function AdminMedicineCatalog() {
     defaultInstructions: "",
   });
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState({
+    code: "",
+    name: "",
+    defaultDose: "",
+    defaultInstructions: "",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(async () => {
     setErr(null);
@@ -72,6 +80,50 @@ export function AdminMedicineCatalog() {
       defaultDose: "",
       defaultInstructions: "",
     });
+    await load();
+  }
+
+  function startEdit(item: MedicineCatalogItem) {
+    setErr(null);
+    setEditingId(item.id);
+    setEditDraft({
+      code: item.code ?? "",
+      name: item.name,
+      defaultDose: item.defaultDose ?? "",
+      defaultInstructions: item.defaultInstructions ?? "",
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit(id: string) {
+    if (!editDraft.name.trim()) {
+      setErr("Medicine name is required.");
+      return;
+    }
+    setSavingEdit(true);
+    setErr(null);
+    const { ok, data } = await api<{ item: MedicineCatalogItem }>(
+      `/api/medicine-catalog/${id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: editDraft.code.trim() || null,
+          name: editDraft.name.trim(),
+          defaultDose: editDraft.defaultDose.trim() || null,
+          defaultInstructions: editDraft.defaultInstructions.trim() || null,
+        }),
+      },
+    );
+    setSavingEdit(false);
+    if (!ok) {
+      setErr((data as { error?: string }).error ?? "Could not save changes");
+      return;
+    }
+    setEditingId(null);
     await load();
   }
 
@@ -168,52 +220,134 @@ export function AdminMedicineCatalog() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {catalog.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="align-top font-medium">
-                {item.name}
-                {item.code ? (
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {item.code}
-                  </span>
-                ) : null}
-                {!item.active ? (
-                  <span className="mt-1 block text-xs text-destructive">
-                    Inactive
-                  </span>
-                ) : null}
-              </TableCell>
-              <TableCell className="align-top text-sm text-muted-foreground">
-                {item.defaultDose || "—"}
-              </TableCell>
-              <TableCell className="align-top text-sm text-muted-foreground">
-                {item.defaultInstructions || "—"}
-              </TableCell>
-              <TableCell className="align-top text-right">
-                <div className="flex flex-wrap justify-end gap-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => void toggleActive(item)}
-                  >
-                    {item.active ? "Deactivate" : "Activate"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="text-destructive"
-                    disabled={deletingId === item.id}
-                    aria-label={`Remove ${item.name}`}
-                    onClick={() => void removeItem(item.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {catalog.map((item) =>
+            editingId === item.id ? (
+              <TableRow key={item.id}>
+                <TableCell className="align-top">
+                  <Input
+                    value={editDraft.name}
+                    aria-label="Medicine name"
+                    placeholder="Medicine name"
+                    onChange={(e) =>
+                      setEditDraft((s) => ({ ...s, name: e.target.value }))
+                    }
+                  />
+                  <Input
+                    className="mt-1"
+                    value={editDraft.code}
+                    aria-label="Code"
+                    placeholder="Code (optional)"
+                    onChange={(e) =>
+                      setEditDraft((s) => ({ ...s, code: e.target.value }))
+                    }
+                  />
+                </TableCell>
+                <TableCell className="align-top">
+                  <Input
+                    value={editDraft.defaultDose}
+                    aria-label="Default dose"
+                    placeholder="e.g. 500 mg tablet"
+                    onChange={(e) =>
+                      setEditDraft((s) => ({
+                        ...s,
+                        defaultDose: e.target.value,
+                      }))
+                    }
+                  />
+                </TableCell>
+                <TableCell className="align-top">
+                  <Input
+                    value={editDraft.defaultInstructions}
+                    aria-label="Default instructions"
+                    placeholder="e.g. 1 tablet every 8 hours"
+                    onChange={(e) =>
+                      setEditDraft((s) => ({
+                        ...s,
+                        defaultInstructions: e.target.value,
+                      }))
+                    }
+                  />
+                </TableCell>
+                <TableCell className="align-top text-right">
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={savingEdit}
+                      onClick={() => void saveEdit(item.id)}
+                    >
+                      {savingEdit ? "Saving…" : "Save"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Cancel edit"
+                      disabled={savingEdit}
+                      onClick={cancelEdit}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              <TableRow key={item.id}>
+                <TableCell className="align-top font-medium">
+                  {item.name}
+                  {item.code ? (
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {item.code}
+                    </span>
+                  ) : null}
+                  {!item.active ? (
+                    <span className="mt-1 block text-xs text-destructive">
+                      Inactive
+                    </span>
+                  ) : null}
+                </TableCell>
+                <TableCell className="align-top text-sm text-muted-foreground">
+                  {item.defaultDose || "—"}
+                </TableCell>
+                <TableCell className="align-top text-sm text-muted-foreground">
+                  {item.defaultInstructions || "—"}
+                </TableCell>
+                <TableCell className="align-top text-right">
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={editingId !== null}
+                      onClick={() => startEdit(item)}
+                    >
+                      <Pencil className="mr-1 h-3.5 w-3.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => void toggleActive(item)}
+                    >
+                      {item.active ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive"
+                      disabled={deletingId === item.id}
+                      aria-label={`Remove ${item.name}`}
+                      onClick={() => void removeItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ),
+          )}
         </TableBody>
       </Table>
     </section>

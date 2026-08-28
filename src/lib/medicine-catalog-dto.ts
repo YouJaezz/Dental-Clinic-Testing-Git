@@ -29,8 +29,35 @@ export type PrescriptionLineItem = {
   doseStrength: string | null;
   instructions: string | null;
   quantity: number;
+  quantityUnit: string | null;
   sortOrder: number;
 };
+
+/** Dispense units printed after the `#` count, e.g. `#10caps`. */
+export const PRESCRIPTION_QUANTITY_UNITS = [
+  "caps",
+  "tabs",
+  "mL",
+  "bottle",
+  "sachet",
+  "tube",
+  "amp",
+  "pcs",
+] as const;
+
+export const DEFAULT_PRESCRIPTION_QUANTITY_UNIT = "caps";
+
+/** Guess the dispense unit from a dose string like "500 mg capsule". */
+export function guessQuantityUnit(doseStrength: string | null): string {
+  const dose = doseStrength?.toLowerCase() ?? "";
+  if (dose.includes("tablet") || dose.includes("tab")) return "tabs";
+  if (dose.includes("capsule") || dose.includes("cap")) return "caps";
+  if (dose.includes("syrup") || dose.includes("suspension")) return "bottle";
+  if (dose.includes("mouthwash") || dose.includes("solution")) return "mL";
+  if (dose.includes("gel") || dose.includes("ointment")) return "tube";
+  if (dose.includes("sachet")) return "sachet";
+  return DEFAULT_PRESCRIPTION_QUANTITY_UNIT;
+}
 
 export type PrescriptionSummary = {
   id: string;

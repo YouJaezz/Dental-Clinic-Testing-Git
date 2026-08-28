@@ -6,9 +6,10 @@ import {
   prescriptions,
   visits,
 } from "@/db/schema";
-import type {
-  PrescriptionDetail,
-  PrescriptionSummary,
+import {
+  guessQuantityUnit,
+  type PrescriptionDetail,
+  type PrescriptionSummary,
 } from "@/lib/medicine-catalog-dto";
 import { allocatePrescriptionNumber } from "@/lib/prescription-allocate";
 import { parseManilaBirthDateYmdToUtcMs } from "@/lib/patient-age";
@@ -42,6 +43,7 @@ export type CreatePrescriptionInput = {
     doseStrength?: string | null;
     instructions?: string | null;
     quantity: number;
+    quantityUnit?: string | null;
   }[];
 };
 
@@ -117,6 +119,7 @@ export async function getPrescriptionDetail(
       doseStrength: line.doseStrength,
       instructions: line.instructions,
       quantity: line.quantity ?? 1,
+      quantityUnit: line.quantityUnit ?? null,
       sortOrder: line.sortOrder ?? index,
     })),
   };
@@ -196,6 +199,7 @@ export async function createPrescription(
       doseStrength: dose,
       instructions,
       quantity,
+      quantityUnit: line.quantityUnit?.trim() || guessQuantityUnit(dose),
       sortOrder: index,
     };
   });

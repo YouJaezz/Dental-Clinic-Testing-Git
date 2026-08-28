@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api-client";
 import type { Patient, Role } from "@/lib/clinical-types";
-import type {
-  MedicineCatalogItem,
-  PrescriptionSummary,
+import {
+  guessQuantityUnit,
+  PRESCRIPTION_QUANTITY_UNITS,
+  type MedicineCatalogItem,
+  type PrescriptionSummary,
 } from "@/lib/medicine-catalog-dto";
 import { toManilaDateKey } from "@/lib/manila-date";
 
@@ -25,6 +27,7 @@ type DraftLine = {
   catalogId: string;
   doseStrength: string;
   quantity: string;
+  quantityUnit: string;
   instructions: string;
 };
 
@@ -113,6 +116,7 @@ export function PrescriptionManager(props: {
         catalogId: catalog[0]?.id ?? "",
         doseStrength: catalog[0]?.defaultDose ?? "",
         quantity: "1",
+        quantityUnit: guessQuantityUnit(catalog[0]?.defaultDose ?? null),
         instructions: catalog[0]?.defaultInstructions ?? "",
       },
     ]);
@@ -129,6 +133,7 @@ export function PrescriptionManager(props: {
         catalogId: first?.id ?? "",
         doseStrength: first?.defaultDose ?? "",
         quantity: "1",
+        quantityUnit: guessQuantityUnit(first?.defaultDose ?? null),
         instructions: first?.defaultInstructions ?? "",
       },
     ]);
@@ -144,6 +149,7 @@ export function PrescriptionManager(props: {
           if (item) {
             next.doseStrength = item.defaultDose ?? "";
             next.instructions = item.defaultInstructions ?? "";
+            next.quantityUnit = guessQuantityUnit(item.defaultDose ?? null);
           }
         }
         return next;
@@ -192,6 +198,7 @@ export function PrescriptionManager(props: {
             doseStrength: line.doseStrength.trim() || null,
             instructions: line.instructions.trim() || null,
             quantity: Number.parseInt(line.quantity, 10),
+            quantityUnit: line.quantityUnit.trim() || null,
           })),
         }),
       },
@@ -291,7 +298,7 @@ export function PrescriptionManager(props: {
                 key={line.key}
                 className="grid gap-2 rounded-md border bg-muted/20 p-3 sm:grid-cols-12"
               >
-                <div className="sm:col-span-4">
+                <div className="sm:col-span-3">
                   <Label className="text-xs">Medicine</Label>
                   <select
                     className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
@@ -320,7 +327,7 @@ export function PrescriptionManager(props: {
                     placeholder="e.g. 500 mg capsule"
                   />
                 </div>
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-1">
                   <Label className="text-xs">#</Label>
                   <Input
                     className="mt-1"
@@ -331,8 +338,24 @@ export function PrescriptionManager(props: {
                     onChange={(e) =>
                       updateLine(line.key, { quantity: e.target.value })
                     }
-                    placeholder="e.g. 21"
+                    placeholder="10"
                   />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">Unit</Label>
+                  <select
+                    className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                    value={line.quantityUnit}
+                    onChange={(e) =>
+                      updateLine(line.key, { quantityUnit: e.target.value })
+                    }
+                  >
+                    {PRESCRIPTION_QUANTITY_UNITS.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="sm:col-span-2">
                   <Label className="text-xs">Instructions (Sig.)</Label>

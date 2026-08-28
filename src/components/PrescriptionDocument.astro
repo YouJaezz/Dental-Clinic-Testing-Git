@@ -23,6 +23,7 @@ interface Line {
   doseStrength: string | null;
   instructions: string | null;
   quantity: number;
+  quantityUnit: string | null;
 }
 
 interface Props {
@@ -37,7 +38,18 @@ const { patient, prescriptionNumber, prescribedAtLabel, notes, lines } =
   Astro.props;
 
 const patientName = `${patient.firstName} ${patient.lastName}`;
-const padLines = lines.length > 0 ? lines : [{ name: "", doseStrength: null, instructions: null, quantity: 1 }];
+const padLines =
+  lines.length > 0
+    ? lines
+    : [
+        {
+          name: "",
+          doseStrength: null,
+          instructions: null,
+          quantity: 1,
+          quantityUnit: null,
+        },
+      ];
 ---
 
 <article id="prescription-document" class="prescription-pad">
@@ -106,12 +118,16 @@ const padLines = lines.length > 0 ? lines : [{ name: "", doseStrength: null, ins
           const dosePart = line.doseStrength?.trim()
             ? ` ${line.doseStrength.trim()}`
             : "";
+          const qtyLabel = `#${line.quantity ?? 1}${line.quantityUnit?.trim() ?? ""}`;
           return (
             <div class="prescription-pad__rx-item">
               <p class="prescription-pad__rx-med">
                 {index + 1}. {line.name}
-                {dosePart} # {line.quantity ?? 1}
+                {dosePart}
               </p>
+              {line.name?.trim() ? (
+                <p class="prescription-pad__rx-qty">{qtyLabel}</p>
+              ) : null}
               {line.instructions?.trim() ? (
                 <p class="prescription-pad__rx-sig">
                   Sig. {line.instructions.trim()}
