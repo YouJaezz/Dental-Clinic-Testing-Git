@@ -383,6 +383,37 @@ export const prescriptionLines = pgTable(
   }),
 );
 
+export const patientDocuments = pgTable(
+  "patient_documents",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    patientId: text("patient_id")
+      .notNull()
+      .references(() => patients.id, { onDelete: "cascade" }),
+    visitId: text("visit_id").references(() => visits.id, {
+      onDelete: "set null",
+    }),
+    kind: text("kind").notNull().default("XRAY"),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    caption: text("caption"),
+    takenOn: text("taken_on"),
+    dataBase64: text("data_base64").notNull(),
+    uploadedByUserId: text("uploaded_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: ts("created_at").$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    patientIdx: index("patient_documents_patient_id_idx").on(t.patientId),
+    visitIdx: index("patient_documents_visit_id_idx").on(t.visitId),
+    createdAtIdx: index("patient_documents_created_at_idx").on(t.createdAt),
+  }),
+);
+
 export const visitPayments = pgTable(
   "visit_payments",
   {
@@ -429,7 +460,26 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 export const patientsRelations = relations(patients, ({ many }) => ({
   visits: many(visits),
   prescriptions: many(prescriptions),
+  documents: many(patientDocuments),
 }));
+
+export const patientDocumentsRelations = relations(
+  patientDocuments,
+  ({ one }) => ({
+    patient: one(patients, {
+      fields: [patientDocuments.patientId],
+      references: [patients.id],
+    }),
+    visit: one(visits, {
+      fields: [patientDocuments.visitId],
+      references: [visits.id],
+    }),
+    uploadedBy: one(users, {
+      fields: [patientDocuments.uploadedByUserId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const visitsRelations = relations(visits, ({ one, many }) => ({
   patient: one(patients, {

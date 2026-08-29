@@ -18,6 +18,7 @@ export const visitProcedureLines = active.visitProcedureLines;
 export const medicineCatalog = active.medicineCatalog;
 export const prescriptions = active.prescriptions;
 export const prescriptionLines = active.prescriptionLines;
+export const patientDocuments = active.patientDocuments;
 export const visitPayments = active.visitPayments;
 export const correctionRequests = active.correctionRequests;
 
@@ -30,6 +31,7 @@ export const visitProcedureLinesRelations = active.visitProcedureLinesRelations;
 export const medicineCatalogRelations = active.medicineCatalogRelations;
 export const prescriptionsRelations = active.prescriptionsRelations;
 export const prescriptionLinesRelations = active.prescriptionLinesRelations;
+export const patientDocumentsRelations = active.patientDocumentsRelations;
 export const visitPaymentsRelations = active.visitPaymentsRelations;
 export const correctionRequestsRelations = active.correctionRequestsRelations;
 
@@ -37,6 +39,7 @@ export {
   appLocale,
   correctionRequestStatus,
   correctionRequestType,
+  patientDocumentKind,
   procedureVoidCategory,
   paymentStatus,
   procedurePricingMode,
@@ -49,6 +52,7 @@ export type {
   RoleElevationStatus,
   CorrectionRequestStatus,
   CorrectionRequestType,
+  PatientDocumentKind,
   ProcedureVoidCategory,
   PaymentStatus,
   ProcedurePricingMode,

@@ -2,11 +2,15 @@ export async function api<T>(
   path: string,
   init?: RequestInit,
 ): Promise<{ ok: boolean; status: number; data: T }> {
+  // The browser must set its own multipart boundary, so never force JSON on FormData.
+  const isFormData =
+    typeof FormData !== "undefined" && init?.body instanceof FormData;
+
   const res = await fetch(path, {
     ...init,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(init?.headers ?? {}),
     },
   });

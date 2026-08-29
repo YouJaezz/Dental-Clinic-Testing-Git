@@ -8,6 +8,7 @@ const links = [
   { href: "/workspace/record", key: "workspace.record" as const },
   { href: "/workspace/payment", key: "workspace.payment" as const },
   { href: "/workspace/prescription", key: "workspace.prescription" as const },
+  { href: "/workspace/documents", key: "workspace.documents" as const },
 ] as const;
 
 export function WorkspaceNav(props: { querySuffix?: string }) {

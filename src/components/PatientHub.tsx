@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Images,
   LayoutDashboard,
   Loader2,
   Pencil,
@@ -810,6 +811,21 @@ export function PatientHub(props: { initialRole: Role }) {
                       >
                         <a href={`/workspace${workspaceQuery(p.id, null)}`}>
                           <LayoutDashboard />
+                        </a>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        asChild
+                        aria-label="Open patient files"
+                        title="X-rays, photos and scanned documents"
+                      >
+                        <a
+                          href={`/workspace/documents${workspaceQuery(p.id, null)}`}
+                        >
+                          <Images />
                         </a>
                       </Button>
                       <Button

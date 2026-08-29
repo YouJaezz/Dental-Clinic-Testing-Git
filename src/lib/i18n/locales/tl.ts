@@ -84,6 +84,7 @@ export const tl: TranslationDict = {
     record: "Rekord",
     payment: "Bayad",
     prescription: "Reseta",
+    documents: "Mga file",
   },
   dev: {
     tab: "Advanced",

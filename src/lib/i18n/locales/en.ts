@@ -82,6 +82,7 @@ export const en = {
     record: "Record",
     payment: "Payment",
     prescription: "Prescription",
+    documents: "Files",
   },
   dev: {
     tab: "Advanced",

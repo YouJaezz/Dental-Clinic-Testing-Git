@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { WorkspaceDocuments } from "@/components/WorkspaceDocuments";
+---
+
+<AppShell title="Files">
+  <WorkspaceDocuments client:load initialRole={Astro.locals.userRole} />
+</AppShell>

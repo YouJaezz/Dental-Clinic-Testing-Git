@@ -226,6 +226,7 @@ function applySqlite() {
   ) {
     console.log("Applying prescription line quantity unit…");
     db.exec("ALTER TABLE prescription_lines ADD COLUMN quantity_unit text;");
+    // Older lines predate units; infer one from the dose so reprints read "#10caps".
     db.exec(`
       UPDATE prescription_lines SET quantity_unit = CASE
         WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%tablet%' THEN 'tabs'
@@ -235,6 +236,11 @@ function applySqlite() {
       END
       WHERE quantity_unit IS NULL;
     `);
+  }
+
+  if (!hasTable(db, "patient_documents")) {
+    console.log("Applying patient documents schema…");
+    runSqlFile(db, "drizzle/0019_patient_documents.sql");
   }
 
   db.close();
@@ -428,6 +434,51 @@ async function applyPostgres() {
       }
     }
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS visits_ticket_number_idx ON visits (ticket_number)`;
+
+    const medicineTable = await sql`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'medicine_catalog'
+    `;
+    if (medicineTable.length === 0) {
+      console.log("Applying Postgres prescriptions schema…");
+      await runSqlFileOnPg(sql, "drizzle/pg/0007_prescriptions.sql");
+    }
+
+    const rxQuantityCol = await sql`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'prescription_lines' AND column_name = 'quantity'
+    `;
+    if (rxQuantityCol.length === 0) {
+      console.log("Applying Postgres prescription line quantity…");
+      await runSqlFileOnPg(sql, "drizzle/pg/0008_prescription_line_quantity.sql");
+    }
+
+    const rxUnitCol = await sql`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'prescription_lines' AND column_name = 'quantity_unit'
+    `;
+    if (rxUnitCol.length === 0) {
+      console.log("Applying Postgres prescription line quantity unit…");
+      await runSqlFileOnPg(sql, "drizzle/pg/0009_prescription_line_unit.sql");
+      await sql`
+        UPDATE prescription_lines SET quantity_unit = CASE
+          WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%tablet%' THEN 'tabs'
+          WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%capsule%' THEN 'caps'
+          WHEN LOWER(COALESCE(dose_strength, '')) LIKE '%solution%' THEN 'mL'
+          ELSE 'caps'
+        END
+        WHERE quantity_unit IS NULL
+      `;
+    }
+
+    const documentsTable = await sql`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'patient_documents'
+    `;
+    if (documentsTable.length === 0) {
+      console.log("Applying Postgres patient documents schema…");
+      await runSqlFileOnPg(sql, "drizzle/pg/0010_patient_documents.sql");
+    }
   } finally {
     await sql.end();
   }

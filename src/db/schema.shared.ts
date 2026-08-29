@@ -39,3 +39,12 @@ export type CorrectionRequestStatus =
 /** Why a closed-visit procedure line was voided (shown on audit / printed records). */
 export const procedureVoidCategory = ["ERROR", "REFUNDED"] as const;
 export type ProcedureVoidCategory = (typeof procedureVoidCategory)[number];
+
+/** How a patient file is filed: radiographs, clinical photos, scanned paperwork. */
+export const patientDocumentKind = [
+  "XRAY",
+  "PHOTO",
+  "DOCUMENT",
+  "OTHER",
+] as const;
+export type PatientDocumentKind = (typeof patientDocumentKind)[number];
