@@ -243,6 +243,11 @@ function applySqlite() {
     runSqlFile(db, "drizzle/0019_patient_documents.sql");
   }
 
+  if (!hasTable(db, "dental_certificates")) {
+    console.log("Applying dental certificates schema…");
+    runSqlFile(db, "drizzle/0020_dental_certificates.sql");
+  }
+
   db.close();
   console.log("Schema update complete:", dbPath);
 }
@@ -478,6 +483,15 @@ async function applyPostgres() {
     if (documentsTable.length === 0) {
       console.log("Applying Postgres patient documents schema…");
       await runSqlFileOnPg(sql, "drizzle/pg/0010_patient_documents.sql");
+    }
+
+    const certificatesTable = await sql`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'dental_certificates'
+    `;
+    if (certificatesTable.length === 0) {
+      console.log("Applying Postgres dental certificates schema…");
+      await runSqlFileOnPg(sql, "drizzle/pg/0011_dental_certificates.sql");
     }
   } finally {
     await sql.end();

@@ -383,6 +383,64 @@ export const prescriptionLines = pgTable(
   }),
 );
 
+export const dentalCertificates = pgTable(
+  "dental_certificates",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    patientId: text("patient_id")
+      .notNull()
+      .references(() => patients.id, { onDelete: "cascade" }),
+    visitId: text("visit_id").references(() => visits.id, {
+      onDelete: "set null",
+    }),
+    certificateNumber: integer("certificate_number").notNull(),
+    issuedAt: ts("issued_at"),
+    purpose: text("purpose").notNull(),
+    purposeDetail: text("purpose_detail"),
+    resumeMode: text("resume_mode").notNull().default("AS_TOLERATED"),
+    resumeDate: text("resume_date"),
+    resumeDays: integer("resume_days"),
+    remarks: text("remarks"),
+    createdByUserId: text("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: ts("created_at").$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    numberIdx: index("dental_certificates_number_idx").on(t.certificateNumber),
+    patientIdx: index("dental_certificates_patient_id_idx").on(t.patientId),
+    visitIdx: index("dental_certificates_visit_id_idx").on(t.visitId),
+    issuedAtIdx: index("dental_certificates_issued_at_idx").on(t.issuedAt),
+  }),
+);
+
+export const dentalCertificateLines = pgTable(
+  "dental_certificate_lines",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    certificateId: text("certificate_id")
+      .notNull()
+      .references(() => dentalCertificates.id, { onDelete: "cascade" }),
+    lineId: text("line_id").references(() => visitProcedureLines.id, {
+      onDelete: "set null",
+    }),
+    nameSnapshot: text("name_snapshot").notNull(),
+    detailSnapshot: text("detail_snapshot"),
+    performedOn: text("performed_on"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: ts("created_at").$defaultFn(() => new Date()),
+  },
+  (t) => ({
+    certificateIdx: index("dental_certificate_lines_certificate_id_idx").on(
+      t.certificateId,
+    ),
+  }),
+);
+
 export const patientDocuments = pgTable(
   "patient_documents",
   {
@@ -461,7 +519,37 @@ export const patientsRelations = relations(patients, ({ many }) => ({
   visits: many(visits),
   prescriptions: many(prescriptions),
   documents: many(patientDocuments),
+  dentalCertificates: many(dentalCertificates),
 }));
+
+export const dentalCertificatesRelations = relations(
+  dentalCertificates,
+  ({ one, many }) => ({
+    patient: one(patients, {
+      fields: [dentalCertificates.patientId],
+      references: [patients.id],
+    }),
+    visit: one(visits, {
+      fields: [dentalCertificates.visitId],
+      references: [visits.id],
+    }),
+    createdBy: one(users, {
+      fields: [dentalCertificates.createdByUserId],
+      references: [users.id],
+    }),
+    lines: many(dentalCertificateLines),
+  }),
+);
+
+export const dentalCertificateLinesRelations = relations(
+  dentalCertificateLines,
+  ({ one }) => ({
+    certificate: one(dentalCertificates, {
+      fields: [dentalCertificateLines.certificateId],
+      references: [dentalCertificates.id],
+    }),
+  }),
+);
 
 export const patientDocumentsRelations = relations(
   patientDocuments,

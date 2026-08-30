@@ -19,6 +19,8 @@ export const medicineCatalog = active.medicineCatalog;
 export const prescriptions = active.prescriptions;
 export const prescriptionLines = active.prescriptionLines;
 export const patientDocuments = active.patientDocuments;
+export const dentalCertificates = active.dentalCertificates;
+export const dentalCertificateLines = active.dentalCertificateLines;
 export const visitPayments = active.visitPayments;
 export const correctionRequests = active.correctionRequests;
 
@@ -32,11 +34,16 @@ export const medicineCatalogRelations = active.medicineCatalogRelations;
 export const prescriptionsRelations = active.prescriptionsRelations;
 export const prescriptionLinesRelations = active.prescriptionLinesRelations;
 export const patientDocumentsRelations = active.patientDocumentsRelations;
+export const dentalCertificatesRelations = active.dentalCertificatesRelations;
+export const dentalCertificateLinesRelations =
+  active.dentalCertificateLinesRelations;
 export const visitPaymentsRelations = active.visitPaymentsRelations;
 export const correctionRequestsRelations = active.correctionRequestsRelations;
 
 export {
   appLocale,
+  certificatePurpose,
+  certificateResumeMode,
   correctionRequestStatus,
   correctionRequestType,
   patientDocumentKind,
@@ -49,6 +56,8 @@ export {
 } from "./schema.shared";
 export type {
   AppLocale,
+  CertificatePurpose,
+  CertificateResumeMode,
   RoleElevationStatus,
   CorrectionRequestStatus,
   CorrectionRequestType,

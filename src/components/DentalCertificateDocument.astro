@@ -1,0 +1,175 @@
+---
+import "@/styles/dental-certificate-document.css";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_DOCTOR_CREDENTIAL,
+  CLINIC_DOCTOR_LICENSE_NO,
+  CLINIC_LOGO_SRC,
+  CLINIC_NAME,
+  CLINIC_PHONE,
+  CLINIC_SERVICES,
+} from "@/lib/clinic-branding";
+import {
+  certificateActivityNoun,
+  certificatePurposeHeadline,
+} from "@/lib/dental-certificate-dto";
+import type {
+  CertificatePurpose,
+  CertificateResumeMode,
+} from "@/db/schema.shared";
+
+interface Patient {
+  firstName: string;
+  lastName: string;
+  address: string | null;
+  displayAge: number | null;
+  displayGender: string | null;
+}
+
+interface Line {
+  name: string;
+  detail: string | null;
+  performedOnLabel: string | null;
+}
+
+interface Props {
+  patient: Patient;
+  certificateNumber: number;
+  issuedAtLabel: string;
+  purpose: CertificatePurpose;
+  purposeDetail: string | null;
+  resumeMode: CertificateResumeMode;
+  resumeDateLabel: string | null;
+  resumeDays: number | null;
+  remarks: string | null;
+  lines: Line[];
+}
+
+const {
+  patient,
+  certificateNumber,
+  issuedAtLabel,
+  purpose,
+  purposeDetail,
+  resumeMode,
+  resumeDateLabel,
+  resumeDays,
+  remarks,
+  lines,
+} = Astro.props;
+
+const patientName = `${patient.firstName} ${patient.lastName}`.trim();
+const headline = certificatePurposeHeadline(purpose, purposeDetail);
+const activity = certificateActivityNoun(purpose);
+
+const gender = patient.displayGender?.trim().toLowerCase() ?? "";
+const pronoun = gender.startsWith("m")
+  ? "He"
+  : gender.startsWith("f")
+    ? "She"
+    : "He/She";
+
+let resumeSentence: string;
+if (resumeMode === "DATE" && resumeDateLabel) {
+  resumeSentence = `${pronoun} may resume ${activity} on ${resumeDateLabel}.`;
+} else if (resumeMode === "AFTER_DAYS" && resumeDays) {
+  const dayWord = resumeDays === 1 ? "day" : "days";
+  resumeSentence = `${pronoun} may resume ${activity} after ${resumeDays} ${dayWord} from the date of this certification.`;
+} else {
+  resumeSentence = `${pronoun} may resume ${activity} as tolerated.`;
+}
+
+const ageLabel = patient.displayAge != null ? `${patient.displayAge}` : "____";
+const addressLabel = patient.address?.trim() || "____________________";
+---
+
+<article id="dental-certificate" class="dental-cert">
+  <header class="dental-cert__header">
+    <img
+      src={CLINIC_LOGO_SRC}
+      alt=""
+      class="dental-cert__logo"
+      width="62"
+      height="62"
+    />
+    <div>
+      <p class="dental-cert__clinic-name">
+        Sta. Isabel <span>Dental Clinic</span>
+      </p>
+      <p class="dental-cert__services">{CLINIC_SERVICES}</p>
+      <p class="dental-cert__contact">{CLINIC_ADDRESS}</p>
+      <p class="dental-cert__contact">{CLINIC_PHONE}</p>
+    </div>
+  </header>
+
+  <h1 class="dental-cert__title">CERTIFICATION</h1>
+
+  <div class="dental-cert__date">
+    <span class="dental-cert__date-value">{issuedAtLabel}</span>
+    <span class="dental-cert__date-label">Date</span>
+  </div>
+
+  <p class="dental-cert__salutation">TO WHOM IT MAY CONCERN,</p>
+
+  <p class="dental-cert__body">
+    This is to certify that, <span class="dental-cert__fill">{patientName}</span>,
+    {ageLabel} years old, presently residing at {addressLabel}, was examined and
+    treated at {CLINIC_NAME}
+    {
+      lines.length > 0
+        ? " and has undergone the following dental procedure(s):"
+        : " on the date of this certification."
+    }
+  </p>
+
+  {
+    lines.length > 0 ? (
+      <ul class="dental-cert__procedures">
+        {lines.map((line) => (
+          <li>
+            {line.name}
+            {line.detail ? (
+              <span class="dental-cert__procedure-detail"> ({line.detail})</span>
+            ) : null}
+            {line.performedOnLabel ? (
+              <span class="dental-cert__procedure-detail">
+                {" "}— {line.performedOnLabel}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    ) : null
+  }
+
+  <p class="dental-cert__body">
+    Based on the dental findings, the above-named patient is hereby certified
+    <span class="dental-cert__fill"> {headline}</span>. {resumeSentence}
+  </p>
+
+  {remarks?.trim() ? <p class="dental-cert__remarks">{remarks.trim()}</p> : null}
+
+  <p class="dental-cert__body">
+    This certification was given as requested by the above-mentioned name for
+    whatever legal purposes it may serve.
+  </p>
+
+  <section class="dental-cert__closing">
+    <div class="dental-cert__sig">
+      <p class="dental-cert__sig-lead">Very truly yours,</p>
+      <p class="dental-cert__sig-name">Dr. {CLINIC_DOCTOR_CREDENTIAL}</p>
+      <p class="dental-cert__sig-meta">Lic. No. {CLINIC_DOCTOR_LICENSE_NO}</p>
+    </div>
+  </section>
+
+  <footer class="dental-cert__footer">
+    <p class="dental-cert__validity">
+      <strong>Note:</strong> This certificate is valid only when stamped with the
+      official seal of {CLINIC_NAME}. Any copy without the clinic stamp is
+      considered void.
+    </p>
+    <p class="dental-cert__serial">
+      Certificate No. {certificateNumber}
+    </p>
+  </footer>
+</article>

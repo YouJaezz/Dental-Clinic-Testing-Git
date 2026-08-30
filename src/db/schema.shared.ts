@@ -40,6 +40,22 @@ export type CorrectionRequestStatus =
 export const procedureVoidCategory = ["ERROR", "REFUNDED"] as const;
 export type ProcedureVoidCategory = (typeof procedureVoidCategory)[number];
 
+/** What a dental certificate attests to. */
+export const certificatePurpose = [
+  "FIT_TO_WORK",
+  "FIT_TO_STUDY",
+  "OTHER",
+] as const;
+export type CertificatePurpose = (typeof certificatePurpose)[number];
+
+/** How the return-to-work / return-to-school clearance is expressed. */
+export const certificateResumeMode = [
+  "DATE",
+  "AFTER_DAYS",
+  "AS_TOLERATED",
+] as const;
+export type CertificateResumeMode = (typeof certificateResumeMode)[number];
+
 /** How a patient file is filed: radiographs, clinical photos, scanned paperwork. */
 export const patientDocumentKind = [
   "XRAY",

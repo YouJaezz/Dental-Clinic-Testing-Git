@@ -1,0 +1,8 @@
+---
+import AppShell from "@/layouts/AppShell.astro";
+import { WorkspaceCertificate } from "@/components/WorkspaceCertificate";
+---
+
+<AppShell title="Certificate">
+  <WorkspaceCertificate client:load initialRole={Astro.locals.userRole} />
+</AppShell>
